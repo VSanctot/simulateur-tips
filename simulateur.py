@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # 🎨 Configuration page
 st.set_page_config(
@@ -9,11 +11,34 @@ st.set_page_config(
     layout="centered"
 )
 
-# 🎯 Titre et intro
+# ===============================
+# 🔹 Fonction Google Sheets
+# ===============================
+def sauvegarder_donnees(prenom_nom, societe, email, montant, performance, horizon, resultat_cto, resultat_cap):
+    try:
+        # Autorisations pour Google Sheets
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+        client = gspread.authorize(creds)
+
+        # ⚠️ Remplace "Simulations TIPS" par le nom EXACT de ton Google Sheet
+        sheet = client.open("Simulations TIPS").sheet1
+
+        # Ajout d'une ligne de données
+        sheet.append_row([prenom_nom, societe, email, montant, performance, horizon, resultat_cto, resultat_cap])
+
+        st.success("✅ Données envoyées dans la base TIPS (Google Sheets).")
+
+    except Exception as e:
+        st.error(f"⚠️ Erreur lors de l'envoi à Google Sheets : {e}")
+
+# ===============================
+# 🔹 Interface utilisateur
+# ===============================
 st.title("💼 Comparateur Compte-titres vs Contrat de Capitalisation")
 st.markdown("### Un outil développé par **TIPS** pour optimiser vos décisions d’investissement")
 
-# 📝 Formulaire utilisateur
+# Formulaire utilisateur
 prenom_nom = st.text_input("Prénom / Nom")
 societe = st.text_input("Société")
 email = st.text_input("Email professionnel")
@@ -22,7 +47,9 @@ montant = st.number_input("💶 Montant d'investissement (€)", min_value=10000
 performance = st.number_input("📈 Objectif de performance (%)", min_value=3.0, max_value=15.0, step=0.5, value=5.0)
 horizon = st.number_input("⏳ Horizon d'investissement (années)", min_value=3, max_value=40, step=1, value=10)
 
-# 📊 Calculs
+# ===============================
+# 🔹 Calcul et affichage résultats
+# ===============================
 if st.button("🚀 Lancer la simulation"):
     perf = performance / 100
     annees = list(range(1, horizon + 1))
@@ -66,7 +93,6 @@ if st.button("🚀 Lancer la simulation"):
         "Compte-titres": valeurs_ct,
         "Contrat de capitalisation": valeurs_cap
     })
-
     st.subheader("📑 Comparatif année par année")
     st.dataframe(df)
 
@@ -74,14 +100,13 @@ if st.button("🚀 Lancer la simulation"):
     fig, ax = plt.subplots()
     ax.plot(df["Année"], df["Compte-titres"], label="Compte-titres (30%)", linewidth=2, color="#003366")
     ax.plot(df["Année"], df["Contrat de capitalisation"], label="Contrat de capitalisation (3,58%)", linewidth=2, color="#009966")
-
     ax.set_xlabel("Année")
     ax.set_ylabel("Valeur après fiscalité (€)")
     ax.set_title("Évolution comparée - TIPS")
     ax.legend()
     ax.grid(True, linestyle="--", alpha=0.6)
-
     st.pyplot(fig)
 
-
+    # 🔹 Sauvegarde des données dans Google Sheets
+    sauvegarder_donnees(prenom_nom, societe, email, montant, performance, horizon, valeurs_ct[-1], valeurs_cap[-1])
 
