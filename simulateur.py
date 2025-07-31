@@ -3,8 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from fpdf import FPDF
-import io
 
 # ======================
 # CONFIGURATION GOOGLE SHEETS
@@ -20,68 +18,6 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc])
     except Exception as e:
         print(f"[DEBUG] Erreur Google Sheets : {e}")  # log invisible côté client
-
-
-# ======================
-# GENERATION PDF (premium avec €)
-# ======================
-def generer_pdf(prenom_nom, societe, capital, rendement, duree, df, valeur_ct, valeur_cc, gain_absolu, gain_relatif, fig):
-    pdf = FPDF()
-    pdf.add_page()
-
-    # Charger une police Unicode
-    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
-    pdf.set_font("DejaVu", "", 14)
-
-    # Logo
-    try:
-        pdf.image("logo_tips.png", 10, 8, 33)
-    except:
-        pass
-
-    # Titre
-    pdf.cell(200, 10, "TIPS : le simulateur qui valorise votre patrimoine", ln=True, align="C")
-    pdf.ln(10)
-
-    # Paramètres
-    pdf.set_font("DejaVu", "", 12)
-    pdf.cell(200, 10, f"Simulation pour {prenom_nom} - {societe}", ln=True)
-    pdf.cell(200, 10, f"Capital investi : {capital:,.0f} €", ln=True)
-    pdf.cell(200, 10, f"Rendement brut attendu : {rendement:.2f} %", ln=True)
-    pdf.cell(200, 10, f"Durée : {duree} ans", ln=True)
-    pdf.ln(5)
-
-    # Conclusion
-    pdf.multi_cell(0, 10, 
-        f"Après {duree} ans, le Contrat de Capitalisation atteint {valeur_cc:,.0f} €, "
-        f"contre {valeur_ct:,.0f} € pour le Compte Titres.\n\n"
-        f"➡ Gain net constaté : {gain_absolu:,.0f} € "
-        f"({gain_relatif:.0f}% en faveur du Contrat de Capitalisation)."
-    )
-    pdf.ln(5)
-
-    # Tableau simplifié
-    pdf.set_font("DejaVu", "B", 12)
-    pdf.cell(40, 10, "Année", 1)
-    pdf.cell(70, 10, "Compte Titres", 1)
-    pdf.cell(70, 10, "Contrat Capitalisation", 1)
-    pdf.ln()
-    pdf.set_font("DejaVu", "", 10)
-    for i in range(len(df)):
-        pdf.cell(40, 10, str(df['Années'][i]), 1)
-        pdf.cell(70, 10, f"{df['Compte Titres (fiscalité 25%)'][i]:,.0f} €", 1)
-        pdf.cell(70, 10, f"{df['Contrat Capitalisation (fiscalité 105% x 3,41%)'][i]:,.0f} €", 1)
-        pdf.ln()
-
-    # Graphique
-    pdf.ln(10)
-    img_bytes = io.BytesIO()
-    fig.savefig(img_bytes, format="png")
-    img_bytes.seek(0)
-    pdf.image(img_bytes, x=10, w=180)
-
-    # Retourne le PDF en mémoire
-    return pdf.output(dest="S").encode("latin1")
 
 
 # ======================
@@ -217,17 +153,6 @@ else:
         if st.button("⬅ Refaire une simulation"):
             st.session_state.started = False
             st.rerun()
-
-        # ✅ Bouton export PDF
-        pdf_bytes = generer_pdf(prenom_nom, societe, capital_initial, taux_rendement, duree,
-                                df, valeur_finale_ct, valeur_finale_cc, gain_absolu, gain_relatif, fig)
-
-        st.download_button(
-            label="📄 Télécharger le rapport PDF",
-            data=pdf_bytes,
-            file_name="simulation_TIPS.pdf",
-            mime="application/pdf"
-        )
 
         # Enregistrement invisible (Google Sheets)
         envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeur_finale_ct, valeur_finale_cc)
