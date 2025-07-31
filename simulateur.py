@@ -13,11 +13,28 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
         client = gspread.authorize(creds)
 
-        sheet = client.open("TIPS_Simulateur").sheet1
-        sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree])
-        st.success("✅ Données envoyées dans la base TIPS (Google Sheets)")
+        # === MODE DEBUG ===
+        st.info("🔎 Debug Google Sheets activé")
+        try:
+            fichiers = client.openall()
+            st.write("📂 Fichiers accessibles :", [f.title for f in fichiers])
+        except Exception as e:
+            st.error(f"Impossible de lister les fichiers : {e}")
+
+        try:
+            sh = client.open("TIPS_Simulateur")
+            st.success("✅ Fichier trouvé : TIPS_Simulateur")
+            onglets = [ws.title for ws in sh.worksheets()]
+            st.write("📑 Onglets disponibles :", onglets)
+            sheet = sh.sheet1
+            sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree])
+            st.success("✅ Données envoyées dans la base TIPS (Google Sheets)")
+        except Exception as e:
+            st.error(f"⚠️ Erreur accès au fichier ou écriture : {e}")
+
     except Exception as e:
         st.error(f"⚠️ Erreur Google Sheets : {e}")
+
 
 # ======================
 # INTERFACE
