@@ -47,7 +47,7 @@ if not st.session_state.started:
 
     if st.button("🚀 Démarrer la simulation"):
         st.session_state.started = True
-        st.experimental_rerun()
+        st.rerun()  # ✅ nouvelle version (au lieu de experimental_rerun)
 
 else:
     # ======================
@@ -145,3 +145,4 @@ else:
 
         # Enregistrement invisible (Google Sheets)
         envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeur_finale_ct, valeur_finale_cc)
+
