@@ -13,33 +13,22 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
         client = gspread.authorize(creds)
 
-        # === MODE DEBUG ===
-        st.info("🔎 Debug Google Sheets activé")
-        try:
-            fichiers = client.openall()
-            st.write("📂 Fichiers accessibles :", [f.title for f in fichiers])
-        except Exception as e:
-            st.error(f"Impossible de lister les fichiers : {e}")
-
-        try:
-            sh = client.open("TIPS_Simulateur")
-            st.success("✅ Fichier trouvé : TIPS_Simulateur")
-            onglets = [ws.title for ws in sh.worksheets()]
-            st.write("📑 Onglets disponibles :", onglets)
-            sheet = sh.sheet1
-            sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree])
-            st.success("✅ Données envoyées dans la base TIPS (Google Sheets)")
-        except Exception as e:
-            st.error(f"⚠️ Erreur accès au fichier ou écriture : {e}")
-
+        # Ouverture du fichier (nom exact dans Google Sheets)
+        sh = client.open("TIPS_Simulateur")
+        sheet = sh.sheet1
+        sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree])
+        st.success("✅ Données envoyées dans la base TIPS (Google Sheets)")
     except Exception as e:
         st.error(f"⚠️ Erreur Google Sheets : {e}")
-
 
 # ======================
 # INTERFACE
 # ======================
-st.title("Comparateur Compte Titres vs Contrat de Capitalisation")
+col1, col2 = st.columns([1,5])
+with col1:
+    st.image("logo_tips.png", width=120)  # <-- Mets ton logo TIPS dans le même dossier
+with col2:
+    st.title("Comparateur Compte Titres vs Contrat de Capitalisation")
 
 st.markdown("### Remplissez vos informations :")
 
@@ -56,6 +45,11 @@ if st.button("Lancer la simulation"):
 
     valeurs_ct = [capital_initial * ((1 + (taux_rendement / 100)) ** annee) for annee in annees]
     valeurs_capitalisation = [capital_initial * ((1 + (rendement_net / 100)) ** annee) for annee in annees]
+
+    # Forcer même point de départ (année 0 = capital initial)
+    valeurs_ct.insert(0, capital_initial)
+    valeurs_capitalisation.insert(0, capital_initial)
+    annees = [0] + annees
 
     df = pd.DataFrame({
         "Années": annees,
