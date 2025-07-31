@@ -23,12 +23,15 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
 
 
 # ======================
-# GENERATION PDF
+# GENERATION PDF (premium avec €)
 # ======================
 def generer_pdf(prenom_nom, societe, capital, rendement, duree, df, valeur_ct, valeur_cc, gain_absolu, gain_relatif, fig):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
+
+    # Charger une police Unicode
+    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
+    pdf.set_font("DejaVu", "", 14)
 
     # Logo
     try:
@@ -38,10 +41,10 @@ def generer_pdf(prenom_nom, societe, capital, rendement, duree, df, valeur_ct, v
 
     # Titre
     pdf.cell(200, 10, "TIPS : le simulateur qui valorise votre patrimoine", ln=True, align="C")
-    pdf.set_font("Arial", "", 12)
     pdf.ln(10)
 
     # Paramètres
+    pdf.set_font("DejaVu", "", 12)
     pdf.cell(200, 10, f"Simulation pour {prenom_nom} - {societe}", ln=True)
     pdf.cell(200, 10, f"Capital investi : {capital:,.0f} €", ln=True)
     pdf.cell(200, 10, f"Rendement brut attendu : {rendement:.2f} %", ln=True)
@@ -58,16 +61,16 @@ def generer_pdf(prenom_nom, societe, capital, rendement, duree, df, valeur_ct, v
     pdf.ln(5)
 
     # Tableau simplifié
-    pdf.set_font("Arial", "B", 12)
+    pdf.set_font("DejaVu", "B", 12)
     pdf.cell(40, 10, "Année", 1)
     pdf.cell(70, 10, "Compte Titres", 1)
     pdf.cell(70, 10, "Contrat Capitalisation", 1)
     pdf.ln()
-    pdf.set_font("Arial", "", 10)
+    pdf.set_font("DejaVu", "", 10)
     for i in range(len(df)):
         pdf.cell(40, 10, str(df['Années'][i]), 1)
-        pdf.cell(70, 10, f"{df['Compte Titres (fiscalité 25%)'][i]:,.0f}", 1)
-        pdf.cell(70, 10, f"{df['Contrat Capitalisation (fiscalité 105% x 3,41%)'][i]:,.0f}", 1)
+        pdf.cell(70, 10, f"{df['Compte Titres (fiscalité 25%)'][i]:,.0f} €", 1)
+        pdf.cell(70, 10, f"{df['Contrat Capitalisation (fiscalité 105% x 3,41%)'][i]:,.0f} €", 1)
         pdf.ln()
 
     # Graphique
