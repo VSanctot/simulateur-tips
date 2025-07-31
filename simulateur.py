@@ -155,30 +155,13 @@ else:
             st.rerun()
 
         # ======================
-        # Call To Action Calendly
+        # Call To Action Calendly intégré (iframe)
         # ======================
         st.markdown("---")
-        st.markdown("### 📅 Prochaine étape : échangeons ensemble")
-        st.markdown(
-            """
-            Vous souhaitez aller plus loin et optimiser votre stratégie patrimoniale ?  
-            👉 Réservez directement un rendez-vous personnalisé via mon agenda en ligne :  
-            """
-        )
+        st.markdown("### 📅 Prochaine étape : réservez directement un rendez-vous")
 
         calendly_url = "https://calendly.com/ton-compte/calendly"  # 🔗 Mets ici ton vrai lien Calendly
-
-        st.markdown(
-            f"""
-            <a href="{calendly_url}" target="_blank">
-                <button style="background-color:#34a853; color:white; padding:15px 25px; 
-                               border:none; border-radius:8px; font-size:16px; cursor:pointer;">
-                    📌 Prendre rendez-vous
-                </button>
-            </a>
-            """,
-            unsafe_allow_html=True
-        )
+        st.components.v1.iframe(calendly_url, width=700, height=700, scrolling=True)
 
         # Enregistrement invisible (Google Sheets)
         envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeur_finale_ct, valeur_finale_cc)
