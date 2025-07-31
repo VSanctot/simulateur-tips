@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# 🎯 Titre
+# 🎯 Titre et intro
 st.title("💼 Comparateur Compte-titres vs Contrat de Capitalisation")
 st.markdown("### Un outil développé par **TIPS** pour optimiser vos décisions d’investissement")
 
@@ -31,7 +31,7 @@ if st.button("🚀 Lancer la simulation"):
 
     # Taux fiscaux
     fiscalite_ct = 0.30      # CTO = 30% sur les gains
-    fiscalite_cap = 1.05 * 0.0341  # Contrat = 105% × 3,41%
+    fiscalite_cap = 1.05 * 0.0341  # Contrat = 105% × 3,41% = 3,5805%
 
     for an in annees:
         # CTO : impôt chaque année sur les gains
@@ -44,7 +44,7 @@ if st.button("🚀 Lancer la simulation"):
         net_gain_cap = gain_cap * (1 - fiscalite_cap)
         valeurs_cap.append(valeurs_cap[-1] + net_gain_cap)
 
-    # Résultats
+    # Résultats finaux
     gain = valeurs_cap[-1] - valeurs_ct[-1]
 
     st.subheader("📊 Résultats finaux")
@@ -60,11 +60,28 @@ if st.button("🚀 Lancer la simulation"):
     else:
         st.warning(f"⚠️ Pas d’avantage (écart : {gain:,.0f} €**)")
 
-    # 🔹 Graphique comparatif
+    # 🔹 Tableau comparatif
     df = pd.DataFrame({
         "Année": [0] + annees,
         "Compte-titres": valeurs_ct,
         "Contrat de capitalisation": valeurs_cap
-})
+    })
+
+    st.subheader("📑 Comparatif année par année")
+    st.dataframe(df)
+
+    # 🔹 Graphique comparatif
+    fig, ax = plt.subplots()
+    ax.plot(df["Année"], df["Compte-titres"], label="Compte-titres (30%)", linewidth=2, color="#003366")
+    ax.plot(df["Année"], df["Contrat de capitalisation"], label="Contrat de capitalisation (3,58%)", linewidth=2, color="#009966")
+
+    ax.set_xlabel("Année")
+    ax.set_ylabel("Valeur après fiscalité (€)")
+    ax.set_title("Évolution comparée - TIPS")
+    ax.legend()
+    ax.grid(True, linestyle="--", alpha=0.6)
+
+    st.pyplot(fig)
+
 
 
