@@ -17,7 +17,7 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         sheet = sh.sheet1
         sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc])
     except Exception as e:
-        print(f"[DEBUG] Erreur Google Sheets : {e}")  # log invisible pour les clients
+        print(f"[DEBUG] Erreur Google Sheets : {e}")  # log invisible côté client
 
 # ======================
 # INTERFACE
@@ -25,7 +25,7 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
 # Header avec logo + titre
 col1, col2 = st.columns([1,4])
 with col1:
-    st.image("logo_tips.png", width=120)  # mets ton logo TIPS ici
+    st.image("logo_tips.png", width=120)  # mets ton logo TIPS dans le dossier
 with col2:
     st.markdown("## Comparateur Patrimonial TIPS")
     st.markdown("*Comparez vos placements en toute transparence*")
@@ -85,20 +85,33 @@ if lancer:
     ax.legend()
     st.pyplot(fig)
 
-    # Étape 3 : Conclusion (en faveur du contrat de capitalisation)
+    # Étape 3 : Conclusion premium (en faveur du contrat de capitalisation)
     valeur_finale_ct = valeurs_ct[-1]
     valeur_finale_cc = valeurs_cc[-1]
 
     gain_absolu = valeur_finale_cc - valeur_finale_ct
     gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
 
-    st.markdown("### 🔹 Conclusion")
-    st.success(
-        f"Après **{duree} ans**, le **Contrat de Capitalisation** atteint **{valeur_finale_cc:,.0f} €**, "
-        f"contre **{valeur_finale_ct:,.0f} €** pour le **Compte Titres**.  \n\n"
-        f"➡️ Le gain réalisé en choisissant le Contrat de Capitalisation est de **{gain_absolu:,.0f} €**, "
-        f"soit **{gain_relatif:.0f}%** par rapport au Compte Titres."
-    )
+    st.markdown("### 🔹 Conclusion comparative")
+
+    with st.container():
+        st.markdown(
+            f"""
+            <div style="background-color:#e6f4ea; padding:20px; border-radius:10px; border-left:8px solid #34a853;">
+                <h4 style="margin-top:0;">📌 Résumé de la simulation</h4>
+                <p style="font-size:16px;">
+                    Après <strong>{duree} ans</strong>, le <strong>Contrat de Capitalisation</strong> atteint 
+                    <strong>{valeur_finale_cc:,.0f} €</strong>, contre <strong>{valeur_finale_ct:,.0f} €</strong> pour le 
+                    <strong>Compte Titres</strong>.
+                </p>
+                <p style="font-size:16px;">
+                    ✅ <strong>Gain net constaté :</strong> {gain_absolu:,.0f} €  
+                    <br>📈 <strong>Écart de performance :</strong> {gain_relatif:.0f}% en faveur du Contrat de Capitalisation.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     # Enregistrement invisible (Google Sheets)
     envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeur_finale_ct, valeur_finale_cc)
