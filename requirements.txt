@@ -1,4 +1,11 @@
-streamlit==1.37.0
+streamlit
+pandas
+matplotlib
+gspread
+oauth2client
+
+
+
 
 
 
