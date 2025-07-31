@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from fpdf import FPDF
+import io
 
 # ======================
 # CONFIGURATION GOOGLE SHEETS
@@ -19,6 +21,66 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
     except Exception as e:
         print(f"[DEBUG] Erreur Google Sheets : {e}")  # log invisible côté client
 
+
+# ======================
+# GENERATION PDF
+# ======================
+def generer_pdf(prenom_nom, societe, capital, rendement, duree, df, valeur_ct, valeur_cc, gain_absolu, gain_relatif, fig):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+
+    # Logo
+    try:
+        pdf.image("logo_tips.png", 10, 8, 33)
+    except:
+        pass
+
+    # Titre
+    pdf.cell(200, 10, "TIPS : le simulateur qui valorise votre patrimoine", ln=True, align="C")
+    pdf.set_font("Arial", "", 12)
+    pdf.ln(10)
+
+    # Paramètres
+    pdf.cell(200, 10, f"Simulation pour {prenom_nom} - {societe}", ln=True)
+    pdf.cell(200, 10, f"Capital investi : {capital:,.0f} €", ln=True)
+    pdf.cell(200, 10, f"Rendement brut attendu : {rendement:.2f} %", ln=True)
+    pdf.cell(200, 10, f"Durée : {duree} ans", ln=True)
+    pdf.ln(5)
+
+    # Conclusion
+    pdf.multi_cell(0, 10, 
+        f"Après {duree} ans, le Contrat de Capitalisation atteint {valeur_cc:,.0f} €, "
+        f"contre {valeur_ct:,.0f} € pour le Compte Titres.\n\n"
+        f"➡ Gain net constaté : {gain_absolu:,.0f} € "
+        f"({gain_relatif:.0f}% en faveur du Contrat de Capitalisation)."
+    )
+    pdf.ln(5)
+
+    # Tableau simplifié
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(40, 10, "Année", 1)
+    pdf.cell(70, 10, "Compte Titres", 1)
+    pdf.cell(70, 10, "Contrat Capitalisation", 1)
+    pdf.ln()
+    pdf.set_font("Arial", "", 10)
+    for i in range(len(df)):
+        pdf.cell(40, 10, str(df['Années'][i]), 1)
+        pdf.cell(70, 10, f"{df['Compte Titres (fiscalité 25%)'][i]:,.0f}", 1)
+        pdf.cell(70, 10, f"{df['Contrat Capitalisation (fiscalité 105% x 3,41%)'][i]:,.0f}", 1)
+        pdf.ln()
+
+    # Graphique
+    pdf.ln(10)
+    img_bytes = io.BytesIO()
+    fig.savefig(img_bytes, format="png")
+    img_bytes.seek(0)
+    pdf.image(img_bytes, x=10, w=180)
+
+    # Retourne le PDF en mémoire
+    return pdf.output(dest="S").encode("latin1")
+
+
 # ======================
 # PAGE D’ACCUEIL
 # ======================
@@ -26,7 +88,7 @@ if "started" not in st.session_state:
     st.session_state.started = False
 
 if not st.session_state.started:
-    # Header
+    # Header accueil
     col1, col2 = st.columns([1,4])
     with col1:
         st.image("logo_tips.png", width=150)
@@ -47,7 +109,7 @@ if not st.session_state.started:
 
     if st.button("🚀 Démarrer la simulation"):
         st.session_state.started = True
-        st.rerun()  # ✅ nouvelle version (au lieu de experimental_rerun)
+        st.rerun()
 
 else:
     # ======================
@@ -59,6 +121,11 @@ else:
     with col2:
         st.markdown("## TIPS : le simulateur qui valorise votre patrimoine")
         st.markdown("*Un outil clair et factuel pour comparer vos solutions d’investissement*")
+
+    # ✅ Bouton retour en haut
+    if st.button("⬅ Retour à l’accueil"):
+        st.session_state.started = False
+        st.rerun()
 
     st.markdown("---")
 
@@ -115,7 +182,7 @@ else:
         ax.legend()
         st.pyplot(fig)
 
-        # Étape 3 : Conclusion premium (contrat mis en avant)
+        # Étape 3 : Conclusion premium
         valeur_finale_ct = valeurs_ct[-1]
         valeur_finale_cc = valeurs_cc[-1]
 
@@ -143,6 +210,21 @@ else:
                 unsafe_allow_html=True
             )
 
+        # ✅ Bouton retour sous la conclusion
+        if st.button("⬅ Refaire une simulation"):
+            st.session_state.started = False
+            st.rerun()
+
+        # ✅ Bouton export PDF
+        pdf_bytes = generer_pdf(prenom_nom, societe, capital_initial, taux_rendement, duree,
+                                df, valeur_finale_ct, valeur_finale_cc, gain_absolu, gain_relatif, fig)
+
+        st.download_button(
+            label="📄 Télécharger le rapport PDF",
+            data=pdf_bytes,
+            file_name="simulation_TIPS.pdf",
+            mime="application/pdf"
+        )
+
         # Enregistrement invisible (Google Sheets)
         envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeur_finale_ct, valeur_finale_cc)
-
