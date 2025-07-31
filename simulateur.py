@@ -17,7 +17,7 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         sheet = sh.sheet1
         sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc])
     except Exception as e:
-        print(f"[DEBUG] Erreur Google Sheets : {e}")  # Log invisible pour les clients
+        print(f"[DEBUG] Erreur Google Sheets : {e}")  # log invisible pour les clients
 
 # ======================
 # INTERFACE
@@ -25,7 +25,7 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
 # Header avec logo + titre
 col1, col2 = st.columns([1,4])
 with col1:
-    st.image("logo_tips.png", width=120)  # Logo TIPS
+    st.image("logo_tips.png", width=120)  # mets ton logo TIPS ici
 with col2:
     st.markdown("## Comparateur Patrimonial TIPS")
     st.markdown("*Comparez vos placements en toute transparence*")
@@ -38,7 +38,7 @@ st.markdown("### 🔹 Étape 1 : Paramètres de simulation")
 prenom_nom = st.text_input("👤 Prénom / Nom")
 societe = st.text_input("🏢 Société")
 email_pro = st.text_input("📧 Email professionnel")
-capital_initial = st.number_input("💰 Capital investi (€)", min_value=1000, step=1000, value=10000)
+capital_initial = st.number_input("💰 Capital investi (€)", min_value=1000, step=1000, value=100000)  # base 100 000 €
 taux_rendement = st.number_input("📈 Rendement brut attendu (%)", min_value=1.0, step=0.1, value=5.0)
 duree = st.slider("⏳ Durée de placement (années)", 1, 30, 10)
 
@@ -85,17 +85,19 @@ if lancer:
     ax.legend()
     st.pyplot(fig)
 
-    # Étape 3 : Conclusion factuelle
+    # Étape 3 : Conclusion (en faveur du contrat de capitalisation)
     valeur_finale_ct = valeurs_ct[-1]
     valeur_finale_cc = valeurs_cc[-1]
-    ecart_absolu = valeur_finale_ct - valeur_finale_cc
-    ecart_relatif = (valeur_finale_ct / valeur_finale_cc - 1) * 100 if valeur_finale_cc > 0 else float("inf")
+
+    gain_absolu = valeur_finale_cc - valeur_finale_ct
+    gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
 
     st.markdown("### 🔹 Conclusion")
     st.success(
-        f"Après **{duree} ans**, le **Compte Titres** atteint **{valeur_finale_ct:,.0f} €**, "
-        f"contre **{valeur_finale_cc:,.0f} €** pour le **Contrat de Capitalisation**.  \n\n"
-        f"➡️ L’écart est de **{ecart_absolu:,.0f} €**, soit **{ecart_relatif:.0f}%** en faveur du Compte Titres."
+        f"Après **{duree} ans**, le **Contrat de Capitalisation** atteint **{valeur_finale_cc:,.0f} €**, "
+        f"contre **{valeur_finale_ct:,.0f} €** pour le **Compte Titres**.  \n\n"
+        f"➡️ Le gain réalisé en choisissant le Contrat de Capitalisation est de **{gain_absolu:,.0f} €**, "
+        f"soit **{gain_relatif:.0f}%** par rapport au Compte Titres."
     )
 
     # Enregistrement invisible (Google Sheets)
