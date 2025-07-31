@@ -27,10 +27,9 @@ def sauvegarder_donnees(prenom_nom, societe, email, montant, performance, horizo
         # Ajout d'une ligne de données
         sheet.append_row([prenom_nom, societe, email, montant, performance, horizon, resultat_cto, resultat_cap])
 
-        st.success("✅ Données envoyées dans la base TIPS (Google Sheets).")
-
     except Exception as e:
-        st.error(f"⚠️ Erreur lors de l'envoi à Google Sheets : {e}")
+        # En cas d'erreur, on remonte l'info au simulateur
+        raise Exception(f"Erreur Google Sheets : {e}")
 
 # ===============================
 # 🔹 Interface utilisateur
@@ -107,6 +106,20 @@ if st.button("🚀 Lancer la simulation"):
     ax.grid(True, linestyle="--", alpha=0.6)
     st.pyplot(fig)
 
-    # 🔹 Sauvegarde des données dans Google Sheets
-    sauvegarder_donnees(prenom_nom, societe, email, montant, performance, horizon, valeurs_ct[-1], valeurs_cap[-1])
+    # 🔹 Sauvegarde des données dans Google Sheets avec debug
+    try:
+        sauvegarder_donnees(
+            prenom_nom, 
+            societe, 
+            email, 
+            montant, 
+            performance, 
+            horizon, 
+            valeurs_ct[-1], 
+            valeurs_cap[-1]
+        )
+        st.success("✅ Données envoyées dans Google Sheets")
+    except Exception as e:
+        st.error(f"⚠️ Erreur lors de l'envoi vers Google Sheets : {e}")
+
 
