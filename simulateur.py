@@ -8,9 +8,24 @@ from google.oauth2.service_account import Credentials
 # --- Design de la page ---
 st.set_page_config(page_title="TIPS - Comparateur Fiscalité", page_icon="💼", layout="centered")
 
-# --- Titre ---
-st.markdown("<h1 style='color:#003366;'>💼 Comparateur Compte Titres vs Contrat de Capitalisation</h1>", unsafe_allow_html=True)
-st.write("Un outil TIPS pour comparer l'impact fiscal sur vos placements.")
+# --- Logo + Titre (responsive) ---
+st.markdown(
+    """
+    <style>
+    @media (max-width: 768px) {
+        h1 {font-size: 22px !important;}
+        h2 {font-size: 18px !important;}
+        p {font-size: 14px !important;}
+        .stButton>button {width: 100%;}
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.image("logo_tips.png", width=120)
+st.markdown("<h1 style='color:#003366; text-align:center;'>💼 Comparateur Compte Titres vs Contrat de Capitalisation</h1>", unsafe_allow_html=True)
+st.write("<p style='text-align:center;'>Un outil TIPS pour comparer l'impact fiscal sur vos placements.</p>", unsafe_allow_html=True)
 
 # --- Formulaire utilisateur ---
 capital = st.number_input("💰 Capital initial (€)", min_value=1000, value=100000, step=1000)
@@ -67,15 +82,15 @@ if st.button("🚀 Lancer la simulation"):
         "Contrat de Capitalisation": valeurs_cc
     })
 
-    fig, ax = plt.subplots(figsize=(8,5))
+    fig, ax = plt.subplots(figsize=(6,4))  # Graphique plus compact
     ax.plot(df["Années"], df["Compte Titres"], label="Compte Titres", linewidth=2.5, color="#CC0000")
     ax.plot(df["Années"], df["Contrat de Capitalisation"], label="Contrat de Capitalisation", linewidth=2.5, color="#009933")
-    ax.set_xlabel("Années", fontsize=12, color="#003366")
-    ax.set_ylabel("Valeur (€)", fontsize=12, color="#003366")
-    ax.set_title("📈 Évolution comparée des placements", fontsize=14, color="#003366")
-    ax.legend()
+    ax.set_xlabel("Années", fontsize=10, color="#003366")
+    ax.set_ylabel("Valeur (€)", fontsize=10, color="#003366")
+    ax.set_title("📈 Évolution comparée", fontsize=12, color="#003366")
+    ax.legend(fontsize=9)
     ax.grid(True, linestyle="--", alpha=0.6)
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=True)
 
     # Enregistrement Google Sheets
     if st.button("💾 Enregistrer dans la base TIPS"):
