@@ -31,8 +31,8 @@ if not st.session_state.started:
     with col1:
         st.image("logo_tips.png", width=150)
     with col2:
-        st.markdown("## Bienvenue sur le Simulateur Patrimonial TIPS")
-        st.markdown("### *Prenez des décisions éclairées pour optimiser vos placements*")
+        st.markdown("## TIPS : le simulateur qui valorise votre patrimoine")
+        st.markdown("### *Un outil clair et factuel pour comparer vos solutions d’investissement*")
 
     st.markdown("---")
 
@@ -57,8 +57,8 @@ else:
     with col1:
         st.image("logo_tips.png", width=120)
     with col2:
-        st.markdown("## Comparateur Patrimonial TIPS")
-        st.markdown("*Comparez vos placements en toute transparence*")
+        st.markdown("## TIPS : le simulateur qui valorise votre patrimoine")
+        st.markdown("*Un outil clair et factuel pour comparer vos solutions d’investissement*")
 
     st.markdown("---")
 
