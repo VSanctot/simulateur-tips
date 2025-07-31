@@ -13,20 +13,24 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
         client = gspread.authorize(creds)
 
-        # Ouverture du fichier (nom exact dans Google Sheets)
         sh = client.open("TIPS_Simulateur")
         sheet = sh.sheet1
         sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree])
-        st.success("✅ Données envoyées dans la base TIPS (Google Sheets)")
+        
+        # Message neutre pour les clients
+        st.success("✅ Simulation enregistrée avec succès")
     except Exception as e:
-        st.error(f"⚠️ Erreur Google Sheets : {e}")
+        # Message discret côté client
+        st.warning("⚠️ Impossible d’enregistrer la simulation pour le moment.")
+        # Log détaillé uniquement en console (pour toi)
+        print(f"[DEBUG] Erreur Google Sheets : {e}")
 
 # ======================
 # INTERFACE
 # ======================
 col1, col2 = st.columns([1,5])
 with col1:
-    st.image("logo_tips.png", width=120)  # <-- Mets ton logo TIPS dans le même dossier
+    st.image("logo_tips.png", width=120)  # <-- Mets ton logo dans le dossier
 with col2:
     st.title("Comparateur Compte Titres vs Contrat de Capitalisation")
 
@@ -71,5 +75,5 @@ if st.button("Lancer la simulation"):
     ax.legend()
     st.pyplot(fig)
 
-    # Envoi des données
+    # Envoi des données (stockage invisible pour le client)
     envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree)
