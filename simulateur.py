@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import gspread
+import json
 from oauth2client.service_account import ServiceAccountCredentials
 
 # 🎨 Configuration page
@@ -12,23 +13,25 @@ st.set_page_config(
 )
 
 # ===============================
-# 🔹 Fonction Google Sheets
+# 🔹 Fonction Google Sheets via Secrets
 # ===============================
 def sauvegarder_donnees(prenom_nom, societe, email, montant, performance, horizon, resultat_cto, resultat_cap):
     try:
         # Autorisations pour Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+
+        # 🔹 Charger les credentials depuis les Secrets Streamlit
+        creds_json = json.loads(st.secrets["GOOGLE_SHEETS_CREDS"])
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
         client = gspread.authorize(creds)
 
-        # ⚠️ Remplace "Simulations TIPS" par le nom EXACT de ton Google Sheet
+        # ⚠️ Remplace "Simulations TIPS" par le nom exact de ton Google Sheet
         sheet = client.open("Simulations TIPS").sheet1
 
-        # Ajout d'une ligne de données
+        # Ajout d'une ligne
         sheet.append_row([prenom_nom, societe, email, montant, performance, horizon, resultat_cto, resultat_cap])
 
     except Exception as e:
-        # En cas d'erreur, on remonte l'info au simulateur
         raise Exception(f"Erreur Google Sheets : {e}")
 
 # ===============================
@@ -106,7 +109,7 @@ if st.button("🚀 Lancer la simulation"):
     ax.grid(True, linestyle="--", alpha=0.6)
     st.pyplot(fig)
 
-    # 🔹 Sauvegarde des données dans Google Sheets avec debug
+    # 🔹 Sauvegarde des données avec debug
     try:
         sauvegarder_donnees(
             prenom_nom, 
@@ -121,5 +124,3 @@ if st.button("🚀 Lancer la simulation"):
         st.success("✅ Données envoyées dans Google Sheets")
     except Exception as e:
         st.error(f"⚠️ Erreur lors de l'envoi vers Google Sheets : {e}")
-
-
