@@ -64,6 +64,6 @@ if st.button("🚀 Lancer la simulation"):
     df = pd.DataFrame({
         "Année": [0] + annees,
         "Compte-titres": valeurs_ct,
-        "Contrat de capitalisati
+        "Contrat de capitalisation"
 
 
