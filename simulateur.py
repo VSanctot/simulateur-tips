@@ -65,7 +65,7 @@ else:
     prenom_nom = st.text_input("👤 Prénom / Nom")
     societe = st.text_input("🏢 Société")
     email_pro = st.text_input("📧 Email professionnel")
-    capital_initial = st.number_input("💰 Capital investi (€)", min_value=1000, step=1000, value=100000)
+    capital_initial = st.number_input("💰 Capital investi (€)", min_value=100000, step=10000, value=1000000)
     taux_rendement = st.number_input("📈 Rendement brut attendu (%)", min_value=1.0, step=0.1, value=5.0)
     duree = st.slider("⏳ Durée de placement (années)", 1, 30, 10)
 
