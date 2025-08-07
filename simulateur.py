@@ -40,9 +40,9 @@ if not st.session_state.started:
     st.markdown(
         """
         ### Pourquoi utiliser ce simulateur ?  
-        🔹 Comparez de façon claire et factuelle un **Compte Titres** et un **Contrat de Capitalisation**  
+        🔹 Comprendre l'impact de la fiscalité sur la performance financière d'un **Compte Titres** et d'un **Contrat de Capitalisation**  
         🔹 Évaluez vos gains nets après fiscalité, en fonction de votre **capital, rendement et durée**  
-        🔹 Obtenez un **résumé clair et professionnel** de vos résultats  
+        🔹 Obtenez un **résumé clair** de vos résultats  
         """
     )
 
