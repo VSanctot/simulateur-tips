@@ -62,6 +62,15 @@ else:
     st.markdown("---")
     st.markdown("### 🔹 Étape 1 : Paramètres de simulation")
 
+    with st.expander("ℹ️ Détail de la fiscalité du Contrat de Capitalisation"):
+        st.markdown("""
+        Le contrat de capitalisation bénéficie d’une fiscalité avantageuse en cours de vie :
+
+        - Une avance fiscale est prélevée chaque année à hauteur de **105% x 3,41% x 25%** appliquée au rendement.
+        - Cette avance est bien plus faible que l’imposition forfaitaire du **Compte Titres (25%)**.
+        - Cette différence permet un **gain fiscal réinvesti** chaque année, qui agit comme un **levier de performance à effet composé**.
+        """)
+
     prenom_nom = st.text_input("👤 Prénom / Nom")
     societe = st.text_input("🏢 Société")
     email_pro = st.text_input("📧 Email professionnel")
