@@ -124,6 +124,7 @@ else:
         gain_fiscal_cumule = capital_initial * (base ** duree - 1)
 
         st.markdown("### 🔹 Conclusion comparative")
+        st.info("💡 Grâce à une fiscalité annuelle bien plus faible, le contrat de capitalisation génère une économie d'impôt réinvestie chaque année. Cette dynamique crée un effet boule de neige qui bonifie vos performances sur le long terme.")
         with st.container():
             st.markdown(
                 f"""
