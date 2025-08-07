@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import plotly.graph_objects as go
 
 # ======================
 # CONFIGURATION GOOGLE SHEETS
@@ -26,7 +27,7 @@ if "started" not in st.session_state:
     st.session_state.started = False
 
 if not st.session_state.started:
-    col1, col2 = st.columns([1, 4])
+    col1, col2 = st.columns([1,4])
     with col1:
         st.image("logo_tips.png", width=150)
     with col2:
@@ -34,19 +35,20 @@ if not st.session_state.started:
         st.markdown("### *Un levier d’aide à la décision pour optimiser les choix d’investissement*")
 
     st.markdown("---")
+
     st.markdown("""
         ### Pourquoi utiliser ce simulateur ?  
         🔹 Comprendre l'impact de la fiscalité sur la performance financière d'un **Compte Titres** et d'un **Contrat de Capitalisation**  
         🔹 Évaluez vos gains nets après fiscalité, en fonction de votre **capital, rendement et durée**  
         🔹 Obtenez un **résumé clair** de vos résultats  
-    """)
+        """)
 
     if st.button("🚀 Démarrer la simulation"):
         st.session_state.started = True
         st.rerun()
 
 else:
-    col1, col2 = st.columns([1, 4])
+    col1, col2 = st.columns([1,4])
     with col1:
         st.image("logo_tips.png", width=120)
     with col2:
@@ -73,10 +75,11 @@ else:
         annees = list(range(1, duree + 1))
 
         taux_fiscal_ct = 0.25
-        taux_fiscal_cc = 1.05 * 0.0341
+        taux_precompte_cc = 1.05 * 0.0341
+        taux_effectif_cc = taux_precompte_cc * 0.25
 
         rendement_ct = taux_rendement * (1 - taux_fiscal_ct)
-        rendement_cc = taux_rendement * (1 - taux_fiscal_cc)
+        rendement_cc = taux_rendement * (1 - taux_effectif_cc)
 
         valeurs_ct = [capital_initial * ((1 + (rendement_ct / 100)) ** annee) for annee in annees]
         valeurs_cc = [capital_initial * ((1 + (rendement_cc / 100)) ** annee) for annee in annees]
@@ -85,27 +88,27 @@ else:
         valeurs_cc.insert(0, capital_initial)
         annees = [0] + annees
 
+        avance_totale = sum([((capital_initial * ((1 + (taux_rendement / 100)) ** annee)) - capital_initial) * (taux_precompte_cc) for annee in annees[1:]])
+        impot_theorique = sum([((capital_initial * ((1 + (taux_rendement / 100)) ** annee)) - capital_initial) * taux_fiscal_ct for annee in annees[1:]])
+
+        regularisation = impot_theorique - avance_totale
+        message_regul = f"Le client reçoit un remboursement de {abs(regularisation):,.0f} €" if regularisation < 0 else f"Le client paie un complément d'impôt de {regularisation:,.0f} €"
+
         df = pd.DataFrame({
             "Années": annees,
-            "Compte Titres (fiscalité 25%)": valeurs_ct,
-            "Contrat Capitalisation (fiscalité 105% x 3,41%)": valeurs_cc
+            "Compte Titres (25%)": valeurs_ct,
+            "Contrat Capitalisation (105% x 3,41%)": valeurs_cc
         })
 
         st.markdown("### 🔹 Étape 2 : Résultats chiffrés")
         st.dataframe(df)
 
-        # Graphique interactif avec Plotly
         st.markdown("### 🔹 Évolution des placements")
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df["Années"], y=df["Compte Titres (fiscalité 25%)"], name="Compte Titres (25%)", line=dict(width=3)))
-        fig.add_trace(go.Scatter(x=df["Années"], y=df["Contrat Capitalisation (fiscalité 105% x 3,41%)"], name="Contrat Capitalisation", line=dict(width=3)))
-        fig.update_layout(
-            title="Projection comparée des placements",
-            xaxis_title="Années",
-            yaxis_title="Valeur (€)",
-            template="simple_white"
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        fig.add_trace(go.Scatter(x=df["Années"], y=df["Compte Titres (25%)"], mode='lines', name="Compte Titres (25%)"))
+        fig.add_trace(go.Scatter(x=df["Années"], y=df["Contrat Capitalisation (105% x 3,41%)"], mode='lines', name="Contrat Capitalisation"))
+        fig.update_layout(xaxis_title="Années", yaxis_title="Valeur (€)", height=500)
+        st.plotly_chart(fig)
 
         valeur_finale_ct = valeurs_ct[-1]
         valeur_finale_cc = valeurs_cc[-1]
@@ -113,20 +116,25 @@ else:
         gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
 
         st.markdown("### 🔹 Conclusion comparative")
-        st.markdown(
-            f"""
-            <div style="background-color:#f0f8ff;padding:20px;border-radius:10px;border:1px solid #cce0f5;margin-bottom:25px">
-                <h4 style='margin-top:0'>📌 Résumé personnalisé</h4>
-                <p>Après <strong>{duree} ans</strong>, votre <strong>Contrat de Capitalisation</strong> atteint 
-                <strong>{valeur_finale_cc:,.0f} €</strong>, contre <strong>{valeur_finale_ct:,.0f} €</strong> pour le <strong>Compte Titres</strong>.</p>
-                <p style='font-size:16px;margin-top:10px'>
-                    💼 <strong>Gain net observé</strong> : <span style='color:#0072C6'>{gain_absolu:,.0f} €</span><br>
-                    📈 <strong>Écart de performance</strong> : {gain_relatif:.0f}% en faveur du contrat
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        with st.container():
+            st.markdown(
+                f"""
+                <div style="background-color:#e6f4ea; padding:20px; border-radius:10px; border-left:8px solid #34a853;">
+                    <h4 style="margin-top:0;">📌 Résumé de la simulation</h4>
+                    <p style="font-size:16px;">
+                        Après <strong>{duree} ans</strong>, le <strong>Contrat de Capitalisation</strong> atteint
+                        <strong>{valeur_finale_cc:,.0f} €</strong>, contre <strong>{valeur_finale_ct:,.0f} €</strong> pour le
+                        <strong>Compte Titres</strong>.
+                    </p>
+                    <p style="font-size:16px;">
+                        ✅ <strong>Gain net constaté :</strong> {gain_absolu:,.0f} €<br>
+                        📈 <strong>Écart de performance :</strong> {gain_relatif:.0f}% en faveur du Contrat de Capitalisation.<br>
+                        💼 <strong>Régularisation fiscale :</strong> {message_regul}
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         if st.button("⬅ Refaire une simulation"):
             st.session_state.started = False
@@ -134,7 +142,6 @@ else:
 
         st.markdown("---")
         st.markdown("### 📅 Prochaine étape : réservez directement un rendez-vous")
-
         calendly_url = "https://calendly.com/vincent-sanctot-tips-placements"
         st.components.v1.iframe(calendly_url, width=700, height=700, scrolling=True)
 
