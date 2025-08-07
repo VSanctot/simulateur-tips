@@ -65,7 +65,7 @@ else:
     prenom_nom = st.text_input("👤 Prénom / Nom")
     societe = st.text_input("🏢 Société")
     email_pro = st.text_input("📧 Email professionnel")
-    capital_initial = st.number_input("💰 Capital investi (€)", min_value=100000, step=10000, value=1000000)
+    capital_initial = st.number_input("💰 Capital investi (€)", min_value=1000, step=1000, value=100000)
     taux_rendement = st.number_input("📈 Rendement brut attendu (%)", min_value=1.0, step=0.1, value=5.0)
     duree = st.slider("⏳ Durée de placement (années)", 1, 30, 10)
 
@@ -109,8 +109,12 @@ else:
         gain_absolu = valeur_finale_cc - valeur_finale_ct
         gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
 
-        ecart_fiscal_annuel = taux_fiscal_ct - taux_effectif_cc
-        gain_fiscal_total = ecart_fiscal_annuel * taux_rendement * capital_initial * duree
+        # Nouveau calcul de gain fiscal par capitalisation
+        fiscalite_ct = taux_fiscal_ct * taux_rendement / 100
+        fiscalite_cc = taux_effectif_cc * taux_rendement / 100
+        taux_gain_fiscal = fiscalite_ct - fiscalite_cc
+        base = 1 + taux_gain_fiscal
+        gain_fiscal_cumule = capital_initial * (base ** duree - 1)
 
         st.markdown("### 🔹 Conclusion comparative")
         with st.container():
@@ -126,7 +130,7 @@ else:
                     <p style="font-size:16px;">
                         ✅ <strong>Gain net constaté :</strong> {gain_absolu:,.0f} €<br>
                         📈 <strong>Écart de performance :</strong> {gain_relatif:.0f}% en faveur du contrat<br>
-                        💡 <strong>Effet fiscal cumulé (optimisation en cours de vie) :</strong> {gain_fiscal_total:,.0f} €
+                        💡 <strong>Gain généré par la fiscalité avantageuse :</strong> {gain_fiscal_cumule:,.0f} € (effet composé)
                     </p>
                 </div>
                 """,
