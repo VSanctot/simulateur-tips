@@ -32,8 +32,8 @@ if not st.session_state.started:
     with col1:
         st.image("logo_tips.png", width=150)
     with col2:
-        st.markdown("## TIPS : le simulateur qui valorise votre patrimoine")
-        st.markdown("### *Un outil simple d'aide à la décision*")
+        st.markdown("## TIPS : le simulateur qui transforme vos décisions en valeur")
+        st.markdown("### *Un levier d’aide à la décision pour optimiser les choix d’investissement*")
 
     st.markdown("---")
 
