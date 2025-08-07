@@ -75,7 +75,7 @@ else:
         annees = list(range(1, duree + 1))
 
         taux_fiscal_ct = 0.25
-        taux_precompte_cc = 1.05 * 0.0341
+        taux_precompte_cc = 1.05 * 0.0341 * 0,25
         taux_effectif_cc = taux_precompte_cc * 0.25
 
         rendement_ct = taux_rendement * (1 - taux_fiscal_ct)
