@@ -88,12 +88,6 @@ else:
         valeurs_cc.insert(0, capital_initial)
         annees = [0] + annees
 
-        avance_totale = sum([((capital_initial * ((1 + (taux_rendement / 100)) ** annee)) - capital_initial) * (taux_precompte_cc) for annee in annees[1:]])
-        impot_theorique = sum([((capital_initial * ((1 + (taux_rendement / 100)) ** annee)) - capital_initial) * taux_fiscal_ct for annee in annees[1:]])
-
-        regularisation = impot_theorique - avance_totale
-        message_regul = f"Le client reçoit un remboursement de {abs(regularisation):,.0f} €" if regularisation < 0 else f"Le client paie un complément d'impôt de {regularisation:,.0f} €"
-
         df = pd.DataFrame({
             "Années": annees,
             "Compte Titres (25%)": valeurs_ct,
@@ -115,6 +109,9 @@ else:
         gain_absolu = valeur_finale_cc - valeur_finale_ct
         gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
 
+        avantage_fiscal_annuel = (taux_fiscal_ct - taux_effectif_cc) * taux_rendement * capital_initial
+        avantage_fiscal_total = avantage_fiscal_annuel * duree
+
         st.markdown("### 🔹 Conclusion comparative")
         with st.container():
             st.markdown(
@@ -129,7 +126,7 @@ else:
                     <p style="font-size:16px;">
                         ✅ <strong>Gain net constaté :</strong> {gain_absolu:,.0f} €<br>
                         📈 <strong>Écart de performance :</strong> {gain_relatif:.0f}% en faveur du Contrat de Capitalisation.<br>
-                        💼 <strong>Régularisation fiscale :</strong> {message_regul}
+                        💡 <strong>Gain fiscal réinvesti estimé :</strong> {avantage_fiscal_total:,.0f} € sur {duree} ans
                     </p>
                 </div>
                 """,
