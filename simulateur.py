@@ -109,8 +109,8 @@ else:
         gain_absolu = valeur_finale_cc - valeur_finale_ct
         gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
 
-        avantage_fiscal_annuel = (taux_fiscal_ct - taux_effectif_cc) * taux_rendement * capital_initial
-        avantage_fiscal_total = avantage_fiscal_annuel * duree
+        ecart_fiscal_annuel = taux_fiscal_ct - taux_effectif_cc
+        gain_fiscal_total = ecart_fiscal_annuel * taux_rendement * capital_initial * duree
 
         st.markdown("### 🔹 Conclusion comparative")
         with st.container():
@@ -125,8 +125,8 @@ else:
                     </p>
                     <p style="font-size:16px;">
                         ✅ <strong>Gain net constaté :</strong> {gain_absolu:,.0f} €<br>
-                        📈 <strong>Écart de performance :</strong> {gain_relatif:.0f}% en faveur du Contrat de Capitalisation.<br>
-                        💡 <strong>Gain fiscal réinvesti estimé :</strong> {avantage_fiscal_total:,.0f} € sur {duree} ans
+                        📈 <strong>Écart de performance :</strong> {gain_relatif:.0f}% en faveur du contrat<br>
+                        💡 <strong>Effet fiscal cumulé (optimisation en cours de vie) :</strong> {gain_fiscal_total:,.0f} €
                     </p>
                 </div>
                 """,
