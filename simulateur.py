@@ -75,8 +75,7 @@ else:
         annees = list(range(1, duree + 1))
 
         taux_fiscal_ct = 0.25
-        taux_precompte_cc = 1.05 * 0.0341
-        taux_effectif_cc = taux_precompte_cc * 0.25
+        taux_effectif_cc = 1.05 * 0.0341 * 0.25
 
         rendement_ct = taux_rendement * (1 - taux_fiscal_ct)
         rendement_cc = taux_rendement * (1 - taux_effectif_cc)
@@ -91,7 +90,7 @@ else:
         df = pd.DataFrame({
             "Années": annees,
             "Compte Titres (25%)": valeurs_ct,
-            "Contrat Capitalisation (105% x 3,41%)": valeurs_cc
+            "Contrat Capitalisation (105% x 3,41% x 25%)": valeurs_cc
         })
 
         st.markdown("### 🔹 Étape 2 : Résultats chiffrés")
@@ -100,7 +99,7 @@ else:
         st.markdown("### 🔹 Évolution des placements")
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=df["Années"], y=df["Compte Titres (25%)"], mode='lines', name="Compte Titres (25%)"))
-        fig.add_trace(go.Scatter(x=df["Années"], y=df["Contrat Capitalisation (105% x 3,41%)"], mode='lines', name="Contrat Capitalisation"))
+        fig.add_trace(go.Scatter(x=df["Années"], y=df["Contrat Capitalisation (105% x 3,41% x 25%)"], mode='lines', name="Contrat Capitalisation"))
         fig.update_layout(xaxis_title="Années", yaxis_title="Valeur (€)", height=500)
         st.plotly_chart(fig)
 
@@ -109,7 +108,6 @@ else:
         gain_absolu = valeur_finale_cc - valeur_finale_ct
         gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
 
-        # Nouveau calcul de gain fiscal par capitalisation
         fiscalite_ct = taux_fiscal_ct * taux_rendement / 100
         fiscalite_cc = taux_effectif_cc * taux_rendement / 100
         taux_gain_fiscal = fiscalite_ct - fiscalite_cc
