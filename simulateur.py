@@ -160,7 +160,7 @@ else:
         st.markdown("---")
         st.markdown("### 📅 Prochaine étape : réservez directement un rendez-vous")
 
-        calendly_url = "https://calendly.com/ton-compte/calendly"  # 🔗 Mets ici ton vrai lien Calendly
+        calendly_url = "https://calendly.com/vincent-sanctot-tips-placements"  # 🔗 Mets ici ton vrai lien Calendly
         st.components.v1.iframe(calendly_url, width=700, height=700, scrolling=True)
 
         # Enregistrement invisible (Google Sheets)
