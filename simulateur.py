@@ -94,9 +94,11 @@ else:
 
     with st.expander("ℹ️ Détail de la fiscalité du Contrat de Capitalisation"):
         st.markdown("""
-        Chaque année, une **avance fiscale** égale à **105 % × 3,41 % × 25 %** du rendement annuel est **ajoutée au résultat imposable** (sans prélèvement).  
-        Le **3,41 %** correspond au *Taux Moyen d’Emprunt d’État* (**TME**) de **juillet 2025**, publié par la Banque de France.
+        - Une **avance fiscale** (montant égal à **105% × 3,41%** du rendement annuel) est **ajoutée au résultat imposable** chaque année. Ici, **3,41%** correspond au *Taux Moyen d’Emprunt d’État* (TME) pour le mois de **juillet 2025**, publié par la Banque de France. 
+        - Pour un **Compte Titres** détenu en société, les plus-values et revenus financiers entrent dans le résultat imposable à l’**Impôt sur les Sociétés (IS)** au taux de **25%** en France.
+        - Cette différence permet un **gain fiscal réinvesti** chaque année, qui agit comme un **levier de performance à effet composé**.
         """)
+
 
     lancer = st.button("🚀 Lancer la simulation")
 
