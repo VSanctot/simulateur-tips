@@ -24,7 +24,7 @@ if not st.session_state.started:
         st.image("logo_tips.png", width=150)
     with col2:
         st.markdown("## Le simulateur qui transforme vos décisions en valeur")
-        st.markdown("### *Un levier d’aide à la décision pour optimiser les choix d’investissement*")
+        st.markdown("### *Un outil d’aide à la décision pour optimiser vos choix d’investissement*")
 
     st.markdown("---")
     st.markdown("""
@@ -182,7 +182,7 @@ else:
 
         # ---- Conclusion ----
         st.markdown("### 🔹 Conclusion comparative")
-        st.info("💡 Grâce à une fiscalité annuelle bien plus faible, le contrat de capitalisation génère une économie d'impôt réinvestie chaque année.")
+        st.info("💡 Grâce à son avantage fiscal, chaque économie réinvestie renforce l’effet boule de neige des intérêts composés, maximisant ainsi le rendement global.")
 
         st.markdown(f"""
         Après **{duree} ans**, le Contrat de Capitalisation atteint **{valeur_finale_cc:,.0f} €**, contre **{valeur_finale_ct:,.0f} €** pour le Compte Titres.
