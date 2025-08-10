@@ -30,15 +30,15 @@ if not st.session_state.started:
     with col1:
         st.image("logo_tips.png", width=150)
     with col2:
-        st.markdown("## le simulateur qui transforme vos décisions en valeur")
+        st.markdown("## Le simulateur qui transforme vos décisions en valeur")
         st.markdown("### *Un levier d’aide à la décision pour optimiser les choix d’investissement*")
 
     st.markdown("---")
     st.markdown("""
         ### Pourquoi utiliser ce simulateur ?  
         🔹 Visualiser l'impact de la fiscalité sur un **Compte Titres** vs un **Contrat de Capitalisation**  
-        🔹 Calculer vos **gains nets** en fonction de vos paramètres personnels  
-        🔹 Comparaison claire et chiffrée 
+        🔹 Calculer vos **gains** en fonction de vos objectifs
+        🔹 Renforcer votre connaissance sur le fonctionnement de chaque dispositif
     """)
 
     if st.button("🚀 Démarrer la simulation"):
