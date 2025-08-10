@@ -96,7 +96,7 @@ else:
         st.markdown("""
         Le contrat de capitalisation bénéficie d’une fiscalité avantageuse en cours de vie :
 
-        - Une avance fiscale est prélevée chaque année à hauteur de **105% × 3,41% × 25%** appliquée au rendement.
+        - Une **avance fiscale** (montant égal à **105% × 3,41% × 25%** du rendement annuel) est **ajoutée au résultat imposable** chaque année — ce n’est pas un prélèvement. Ici, **3,41%** correspond au *Taux Moyen d’Emprunt d’État* (TME) pour le mois de **juillet 2025**, publié par la Banque de France et disponible sur le site de la **SPAC – Société des Actuaires Conseil** : [www.spac-actuaires.fr](http://www.spac-actuaires.fr).
         - Pour un **Compte Titres** détenu en société, les plus-values et revenus financiers entrent dans le résultat imposable à l’**Impôt sur les Sociétés (IS)** au taux de **25%** en France.
         - Cette différence permet un **gain fiscal réinvesti** chaque année, qui agit comme un **levier de performance à effet composé**.
         """)
