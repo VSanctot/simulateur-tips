@@ -37,7 +37,7 @@ if not st.session_state.started:
     st.markdown("""
         ### Pourquoi utiliser ce simulateur ?  
         🔹 Visualiser l'impact de la fiscalité sur un **Compte Titres** vs un **Contrat de Capitalisation**  
-        🔹 Calculer vos **gains** en fonction de vos objectifs
+        🔹 Calculer vos **gains** en fonction de vos objectifs à court, moyen et long terme
         🔹 Renforcer votre connaissance sur le fonctionnement de chaque dispositif
     """)
 
