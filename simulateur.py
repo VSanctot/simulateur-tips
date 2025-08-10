@@ -118,16 +118,57 @@ else:
         valeurs_cc.insert(0, capital_initial)
         annees = [0] + annees
 
-        df = pd.DataFrame({"Années": annees, "Compte Titres": valeurs_ct, "Contrat Capitalisation": valeurs_cc})
-        df_affichage = pd.DataFrame({
-            "Années": df["Années"],
-            "Compte Titres": df["Compte Titres"].apply(lambda x: f"{x:,.0f} €".replace(",", " ")),
-            "Contrat Capitalisation": df["Contrat Capitalisation"].apply(lambda x: f"{x:,.0f} €".replace(",", " "))
+        df = pd.DataFrame({
+            "Années": annees,
+            "Compte Titres": valeurs_ct,
+            "Contrat Capitalisation": valeurs_cc
         })
 
-        st.markdown("### 🔹 Résultats chiffrés (comparatif amélioré)")
-        st.markdown(df_affichage.to_html(index=False), unsafe_allow_html=True)
+        # ---- Calcul de l'écart ----
+        df["Écart (€)"] = df["Contrat Capitalisation"] - df["Compte Titres"]
+        df["Écart (%)"] = (df["Écart (€)"] / df["Compte Titres"]) * 100
 
+        # ---- Formatage ----
+        def fmt_eur(x): return f"{x:,.0f} €".replace(",", " ")
+        def fmt_pct(x): return f"{x:.2f} %".replace(".", ",")
+
+        col_annee = df["Années"].tolist()
+        col_ct    = df["Compte Titres"].map(fmt_eur).tolist()
+        col_cc    = df["Contrat Capitalisation"].map(fmt_eur).tolist()
+        col_ecart = df["Écart (€)"].map(fmt_eur).tolist()
+        col_ecartp= df["Écart (%)"].map(fmt_pct).tolist()
+
+        # ---- Styles par ligne ----
+        n = len(col_annee)
+        fill_even = "#f8fbff"
+        fill_odd  = "#ffffff"
+        row_colors = [fill_even if i % 2 == 0 else fill_odd for i in range(n)]
+        row_colors[-1] = "#e8f1ff"  # dernière ligne
+
+        # ---- Affichage tableau Plotly ----
+        st.markdown("### 🔹 Résultats chiffrés (comparatif amélioré)")
+        fig_table = go.Figure(data=[
+            go.Table(
+                columnwidth=[60, 140, 200, 110, 100],
+                header=dict(
+                    values=["Années", "Compte Titres", "Contrat Capitalisation", "Écart (€)", "Écart (%)"],
+                    fill_color="#1a73e8",
+                    font=dict(color="white", size=12),
+                    align="center",
+                    height=34
+                ),
+                cells=dict(
+                    values=[col_annee, col_ct, col_cc, col_ecart, col_ecartp],
+                    align="center",
+                    fill_color=[row_colors],
+                    height=30
+                )
+            )
+        ])
+        fig_table.update_layout(margin=dict(l=0, r=0, t=6, b=0))
+        st.plotly_chart(fig_table, use_container_width=True)
+
+        # ---- Graphique évolution ----
         st.markdown("### 🔹 Évolution des placements")
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=df["Années"], y=df["Compte Titres"], mode='lines+markers', name="Compte Titres"))
@@ -140,6 +181,7 @@ else:
         gain_absolu = valeur_finale_cc - valeur_finale_ct
         gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100
 
+        # ---- Conclusion ----
         st.markdown("### 🔹 Conclusion comparative")
         st.info("💡 Grâce à une fiscalité annuelle bien plus faible, le contrat de capitalisation génère une économie d'impôt réinvestie chaque année.")
 
