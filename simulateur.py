@@ -182,7 +182,7 @@ else:
 
         # ---- Conclusion ----
         st.markdown("### 🔹 Conclusion comparative")
-        st.info("💡 Grâce à son avantage fiscal, chaque économie réinvestie renforce l’effet boule de neige des intérêts composés, maximisant ainsi le rendement global.")
+        st.info("💡 Un levier fiscal qui se transforme en moteur de croissance : chaque euro économisé est réinvesti, et chaque réinvestissement démultiplie la puissance des intérêts composés.")
 
         st.markdown(f"""
         Après **{duree} ans**, le Contrat de Capitalisation atteint **{valeur_finale_cc:,.0f} €**, contre **{valeur_finale_ct:,.0f} €** pour le Compte Titres.
