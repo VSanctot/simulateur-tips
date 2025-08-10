@@ -75,7 +75,7 @@ else:
     with col1:
         st.image("logo_tips.png", width=120)
     with col2:
-        st.markdown("## TIPS : le simulateur qui valorise votre patrimoine")
+        st.markdown("## Le simulateur qui transforme vos décisions en valeur")
         st.markdown("*Un outil clair et factuel pour comparer vos solutions d’investissement*")
 
     if st.button("⬅ Retour à l’accueil"):
@@ -94,11 +94,8 @@ else:
 
     with st.expander("ℹ️ Détail de la fiscalité du Contrat de Capitalisation"):
         st.markdown("""
-        Le contrat de capitalisation bénéficie d’une fiscalité avantageuse en cours de vie :
-
-        - Une **avance fiscale** (montant égal à **105% × 3,41% × 25%** du rendement annuel) est **ajoutée au résultat imposable** chaque année — ce n’est pas un prélèvement. Ici, **3,41%** correspond au *Taux Moyen d’Emprunt d’État* (TME) pour le mois de **juillet 2025**, publié par la Banque de France et disponible sur le site de la **SPAC – Société des Actuaires Conseil** : [www.spac-actuaires.fr](http://www.spac-actuaires.fr).
-        - Pour un **Compte Titres** détenu en société, les plus-values et revenus financiers entrent dans le résultat imposable à l’**Impôt sur les Sociétés (IS)** au taux de **25%** en France.
-        - Cette différence permet un **gain fiscal réinvesti** chaque année, qui agit comme un **levier de performance à effet composé**.
+        Chaque année, une **avance fiscale** égale à **105 % × 3,41 % × 25 %** du rendement annuel est **ajoutée au résultat imposable** (sans prélèvement).  
+        Le **3,41 %** correspond au *Taux Moyen d’Emprunt d’État* (**TME**) de **juillet 2025**, publié par la Banque de France.
         """)
 
     lancer = st.button("🚀 Lancer la simulation")
