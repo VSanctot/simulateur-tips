@@ -28,11 +28,44 @@ if not st.session_state.started:
 
     st.markdown("---")
     st.markdown("""
-        ### Pourquoi utiliser ce simulateur ?  
-        🔹 Visualiser l'impact de la fiscalité sur un **Compte Titres** vs un **Contrat de Capitalisation**  
-        🔹 Calculer vos **gains** en fonction de vos objectifs à court, moyen et long terme
-        🔹 Renforcer votre connaissance sur le fonctionnement de chaque dispositif
-    """)
+<style>
+.features {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0 0;
+  max-width: 900px;
+}
+.features li {
+  position: relative;
+  margin: 10px 0;
+  padding-left: 28px;
+  line-height: 1.45;
+  font-size: 17px;
+}
+.features li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 12px;
+  height: 12px;
+  background: #1a73e8;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px rgba(26,115,232,.12);
+}
+@media (min-width: 900px) {
+  .features { column-count: 2; column-gap: 48px; }
+}
+</style>
+
+### Pourquoi utiliser ce simulateur ?
+<ul class="features">
+  <li>Visualiser l’impact de la fiscalité sur un <strong>Compte Titres</strong> vs un <strong>Contrat de Capitalisation</strong></li>
+  <li>Calculer vos <strong>gains</strong> en fonction de vos objectifs à court, moyen et long terme</li>
+  <li>Renforcer votre connaissance sur le fonctionnement de chaque dispositif</li>
+</ul>
+""", unsafe_allow_html=True)
 
     if st.button("🚀 Démarrer la simulation"):
         st.session_state.started = True
@@ -62,7 +95,6 @@ else:
     with st.expander("ℹ️ Détail de la fiscalité du Contrat de Capitalisation"):
         st.markdown("""
         Le contrat de capitalisation bénéficie d’une fiscalité avantageuse en cours de vie :
-
         - Une avance fiscale est prélevée chaque année à hauteur de **105% x 3,41% x 25%** appliquée au rendement.
         - Cette avance est bien plus faible que l’imposition forfaitaire du **Compte Titres (25%)**.
         - Cette différence permet un **gain fiscal réinvesti** chaque année, qui agit comme un **levier de performance à effet composé**.
