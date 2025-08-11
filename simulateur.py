@@ -1,8 +1,19 @@
 import streamlit as st
+
+# Vérification et import sécurisé de Plotly
+try:
+    import plotly.graph_objects as go
+except ModuleNotFoundError:
+    st.error(
+        "❌ Plotly n'est pas installé.\n"
+        "➡️ Ajoute `plotly` dans `requirements.txt` (ex. `plotly>=5.20`) puis redéploie l'application."
+    )
+    st.stop()
+
 import pandas as pd
-import plotly.graph_objects as go
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+
 
 def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc):
     try:
@@ -14,6 +25,7 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc])
     except Exception as e:
         print(f"[DEBUG] Erreur Google Sheets : {e}")
+
 
 if "started" not in st.session_state:
     st.session_state.started = False
@@ -98,7 +110,6 @@ else:
         - Pour un **Compte Titres** détenu en société, les plus-values et revenus financiers entrent dans le résultat imposable à l’**Impôt sur les Sociétés (IS)** au taux de **25%** en France.
         - Cette différence permet un **gain fiscal réinvesti** chaque année, qui agit comme un **levier de performance à effet composé**.
         """)
-
 
     lancer = st.button("🚀 Lancer la simulation")
 
