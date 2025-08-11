@@ -1,41 +1,44 @@
 import streamlit as st
 
-# ---------- Config page ----------
+# ========== Config ==========
 st.set_page_config(page_title="Simulateur TIPS", layout="wide")
 
-# ---------- Import Plotly (sécurisé) ----------
+# ========== Import Plotly (sécurisé) ==========
 try:
     import plotly.graph_objects as go
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     st.error(
         "❌ Plotly n'est pas installé.\n"
-        "➡️ Ajoute `plotly` dans `requirements.txt` (ex. `plotly==5.22.0`) puis redéploie."
+        "➡️ Ajoute `plotly==5.22.0` dans `requirements.txt` puis redéploie."
     )
     st.stop()
 
 import pandas as pd
 
-# ---------- Utilitaires UI ----------
+
+# ========== Utilitaires ==========
 def safe_image(path: str, **kwargs):
     try:
         st.image(path, **kwargs)
     except Exception as e:
         st.warning(f"⚠️ Image introuvable : `{path}`. (Détail : {e})")
 
+
 def fmt_eur(x): return f"{x:,.0f} €".replace(",", " ")
 def fmt_pct(x): return f"{x:.2f} %".replace(".", ",")
 
-# ---------- Google Sheets (imports paresseux + gestion erreurs) ----------
+
+# ========== Google Sheets (imports paresseux + gestion erreurs) ==========
 def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc):
     try:
         import gspread
         from oauth2client.service_account import ServiceAccountCredentials
+
         scope = [
             "https://spreadsheets.google.com/feeds",
             "https://www.googleapis.com/auth/drive",
         ]
-        # Secrets
-        creds_dict = st.secrets["GOOGLE_SHEETS_CREDS"]
+        creds_dict = st.secrets["GOOGLE_SHEETS_CREDS"]  # secret obligatoire
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
         client = gspread.authorize(creds)
         sh = client.open("TIPS_Simulateur")
@@ -48,12 +51,15 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
     except Exception as e:
         st.warning(f"⚠️ Échec d’envoi vers Google Sheets : {e}")
 
-# ---------- State ----------
+
+# ========== State ==========
 if "started" not in st.session_state:
     st.session_state.started = False
 
+
+# ========== App ==========
 try:
-    # ================= Accueil =================
+    # ----- Accueil -----
     if not st.session_state.started:
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -74,8 +80,8 @@ try:
 ### Pourquoi utiliser ce simulateur ?
 <ul class="features">
   <li>Visualiser l’impact de la fiscalité sur un <strong>Compte Titres</strong> vs un <strong>Contrat de Capitalisation</strong></li>
-  <li>Calculer vos <strong>gains</strong> en fonction de vos objectifs à court, moyen et long terme</li>
-  <li>Renforcer votre connaissance sur le fonctionnement de chaque dispositif</li>
+  <li>Calculer vos <strong>gains</strong> selon vos objectifs</li>
+  <li>Renforcer votre compréhension de chaque dispositif</li>
 </ul>
 """, unsafe_allow_html=True)
 
@@ -83,7 +89,7 @@ try:
             st.session_state.started = True
             st.rerun()
 
-    # ================= Simulateur =================
+    # ----- Simulateur -----
     else:
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -108,15 +114,17 @@ try:
 
         with st.expander("ℹ️ Détail de la fiscalité du Contrat de Capitalisation"):
             st.markdown("""
-            - Une **avance fiscale** (montant égal à **105% × 3,41%** du rendement annuel) est **ajoutée au résultat imposable** chaque année.
-            - Pour un **Compte Titres** détenu en société, les revenus entrent au **taux d’IS 25%**.
+            - Une **avance fiscale** de **105% × 3,41%** du rendement annuel est **ajoutée au résultat imposable**.
+            - Pour un **Compte Titres** en société : **IS 25%**.
             - L’écart de taxation est **réinvesti** chaque année (effet composé).
             """)
 
-        if st.button("🚀 Lancer la simulation"):
+        lancer = st.button("🚀 Lancer la simulation")
+
+        if lancer:
             annees = list(range(1, duree + 1))
             taux_fiscal_ct = 0.25
-            taux_fiscal_cc = 1.05 * 0.0341 * 0.25
+            taux_fiscal_cc = 1.05 * 0.0341 * 0.25  # avance fiscale réintégrée
 
             rendement_ct = taux_rendement * (1 - taux_fiscal_ct)
             rendement_cc = taux_rendement * (1 - taux_fiscal_cc)
@@ -145,7 +153,8 @@ try:
 
             n = len(col_annee)
             row_colors = [("#f8fbff" if i % 2 == 0 else "#ffffff") for i in range(n)]
-            row_colors[-1] = "#e8f1ff"
+            if n:
+                row_colors[-1] = "#e8f1ff"
 
             st.markdown("### 🔹 Résultats chiffrés (comparatif amélioré)")
             fig_table = go.Figure(data=[
@@ -166,4 +175,49 @@ try:
                     )
                 )
             ])
+            fig_table.update_layout(margin=dict(l=0, r=0, t=6, b=0))
+            st.plotly_chart(fig_table, use_container_width=True)
 
+            # ----- Courbes -----
+            st.markdown("### 🔹 Évolution des placements")
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=df["Années"], y=df["Compte Titres"], mode='lines+markers', name="Compte Titres"))
+            fig.add_trace(go.Scatter(x=df["Années"], y=df["Contrat Capitalisation"], mode='lines+markers', name="Contrat Capitalisation"))
+            fig.update_layout(title="Évolution comparée des placements", xaxis_title="Années", yaxis_title="Montant (€)", template="plotly_white")
+            st.plotly_chart(fig, use_container_width=True)
+
+            valeur_finale_ct = valeurs_ct[-1]
+            valeur_finale_cc = valeurs_cc[-1]
+            gain_absolu = valeur_finale_cc - valeur_finale_ct
+            gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100
+
+            st.markdown("### 🔹 Conclusion comparative")
+            st.info("💡 Le différentiel fiscal réinvesti agit comme un accélérateur d’intérêts composés.")
+            st.markdown(f"""
+            Après **{duree} ans**, le Contrat de Capitalisation atteint **{valeur_finale_cc:,.0f} €**, contre **{valeur_finale_ct:,.0f} €** pour le Compte Titres.  
+            ✅ Gain net : {gain_absolu:,.0f} €  
+            📈 Écart de performance : {gain_relatif:.1f}%
+            """)
+
+            if st.button("⬅ Refaire une simulation"):
+                st.session_state.started = False
+                st.rerun()
+
+            st.markdown("---")
+            st.markdown("### 📅 Prochaine étape : réservez directement un rendez-vous")
+            st.components.v1.iframe(
+                "https://calendly.com/vincent-sanctot-tips-placements",
+                width=700, height=700, scrolling=True
+            )
+
+            # Envoi Google Sheets (optionnel, non bloquant)
+            envoi_google_sheets(
+                prenom_nom, societe, email_pro,
+                capital_initial, taux_rendement, duree,
+                valeur_finale_ct, valeur_finale_cc
+            )
+
+# ----- Capture de toute exception inattendue -----
+except Exception as e:
+    st.error("❌ Une erreur s'est produite dans l'application.")
+    st.exception(e)  # stacktrace visible pour debug rapide
