@@ -2,7 +2,6 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 
 # ----------------- Réglages généraux -----------------
 st.set_page_config(page_title="Simulateur Placements", page_icon="📊", layout="wide")
@@ -10,13 +9,14 @@ st.set_page_config(page_title="Simulateur Placements", page_icon="📊", layout=
 # CSS minimal pour lisibilité (fond clair, texte foncé, tableau contrasté)
 st.markdown("""
 <style>
-/* Fond clair et texte foncé même si l'utilisateur force un thème sombre */
+/* Conserve un fond clair même si le thème sombre est choisi côté utilisateur */
 html, body, [data-testid="stAppViewContainer"] {
   background: #ffffff !important; color: #111 !important;
 }
 h1, h2, h3, h4, h5 { color:#1f2937 !important; }
+[data-testid="stMetricDelta"], .st-emotion-cache-1q6af9w { color:#111 !important; }
 
-/* Tableau : texte foncé + zebra */
+/* Tableau : lignes zebra + texte foncé */
 [data-testid="stTable"], [data-testid="stDataFrame"] table {
   color: #111 !important;
 }
@@ -27,14 +27,14 @@ h1, h2, h3, h4, h5 { color:#1f2937 !important; }
   background: #f3f4f6 !important;
 }
 
-/* Marges resserrées sur mobile */
+/* Boutons pleins largeur sur mobile */
 @media (max-width: 640px) {
   .block-container { padding-top: 0.5rem; }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------- État de l'app -----------------
+# ----------------- Etat de l'app -----------------
 if "locked" not in st.session_state:
     st.session_state.locked = False
 if "result" not in st.session_state:
@@ -48,22 +48,23 @@ def simulate(capital_initial: float, n_years: int, r_ct: float, r_cc: float):
     Calcule les trajectoires de valeur pour :
     - Compte Titres (CT)
     - Contrat de Capitalisation (CC)
-    r_ct et r_cc en décimal (ex: 0.0375 pour 3,75%).
+
+    r_ct et r_cc doivent être fournis en taux décimal (ex: 0.0375 pour 3,75%).
     """
     years = np.arange(0, n_years + 1)
     ct = capital_initial * (1 + r_ct) ** years
     cc = capital_initial * (1 + r_cc) ** years
     return {"years": years, "ct": ct, "cc": cc}
 
-def build_table(data: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Construit le tableau récapitulatif avec écart € et % (brut + affichage formaté FR)."""
+def build_table(data: dict) -> pd.DataFrame:
+    """Construit le tableau récapitulatif avec écart € et %."""
     years = data["years"]
     ct = data["ct"]
     cc = data["cc"]
     diff = cc - ct
     pct = np.where(ct != 0, diff / ct, 0.0)
 
-    raw_df = pd.DataFrame({
+    df = pd.DataFrame({
         "Années": years.astype(int),
         "Compte Titres (€)": ct,
         "Contrat Capitalisation (€)": cc,
@@ -71,17 +72,19 @@ def build_table(data: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
         "Écart (%)": pct
     })
 
-    # Formatage FR pour l'affichage (espaces, virgules)
-    disp_df = pd.DataFrame({
-        "Années": raw_df["Années"],
-        "Compte Titres (€)": raw_df["Compte Titres (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
-        "Contrat Capitalisation (€)": raw_df["Contrat Capitalisation (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
-        "Écart (€)": raw_df["Écart (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
-        "Écart (%)": raw_df["Écart (%)"].map(lambda x: f"{x*100:,.2f} %".replace(",", " ").replace(".", ","))
+    # Version affichage (strings formatées pour lisibilité)
+    df_display = pd.DataFrame({
+        "Années": df["Années"],
+        "Compte Titres (€)": df["Compte Titres (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
+        "Contrat Capitalisation (€)": df["Contrat Capitalisation (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
+        "Écart (€)": df["Écart (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
+        "Écart (%)": df["Écart (%)"].map(lambda x: f"{x*100:,.2f} %".replace(",", " ").replace(".", ","))
     })
-    return raw_df, disp_df
+    return df, df_display
 
 # ----------------- Graphique Plotly -----------------
+import plotly.graph_objects as go
+
 def build_figure(data: dict) -> go.Figure:
     fig = go.Figure()
 
@@ -94,7 +97,7 @@ def build_figure(data: dict) -> go.Figure:
         name="Contrat Capitalisation"
     ))
 
-    # Légende horizontale, au-dessus, ancrée à droite -> lisible sur mobile
+    # Légende horizontale, au-dessus, ancrée à droite -> meilleure lisibilité mobile
     fig.update_layout(
         title="Évolution comparée des placements",
         xaxis_title="Années",
@@ -107,6 +110,7 @@ def build_figure(data: dict) -> go.Figure:
         margin=dict(l=10, r=10, t=60, b=10),
         hovermode="x unified"
     )
+    # Séparateurs de milliers
     fig.update_yaxes(separatethousands=True)
     return fig
 
@@ -143,13 +147,14 @@ with st.form("params"):
 # Calcul uniquement au clic (évite les reruns à chaque frappe)
 if submitted and not st.session_state.locked:
     st.session_state.result = simulate(capital_initial, n_years, r_ct, r_cc)
-    st.session_state.table = build_table(st.session_state.result)
+    raw_df, disp_df = build_table(st.session_state.result)
+    st.session_state.table = (raw_df, disp_df)
 
 # ----------------- Résultats -----------------
 if st.session_state.result is not None:
     fig = build_figure(st.session_state.result)
 
-    # Graphique figé si locked=True (pas de pan/zoom, pas de barre d'outils)
+    # Graphique figé si locked=True (plus de pan/zoom, barre d'outils masquée)
     st.plotly_chart(
         fig, use_container_width=True,
         config={"displayModeBar": False, "staticPlot": st.session_state.locked}
@@ -163,14 +168,11 @@ if st.session_state.result is not None:
         disp_df, use_container_width=True, hide_index=True
     )
 
-    # Export CSV (UTF-8-SIG pour Excel)
-    csv = raw_df.to_csv(index=False).encode("utf-8-sig")
+    # Export CSV (données brutes, pas les strings formatées)
+    csv = raw_df.to_csv(index=False).encode("utf-8")
     st.download_button(
-        "📥 Télécharger les résultats (CSV)",
-        data=csv,
-        file_name="simulation_resultats.csv",
-        mime="text/csv",
-        use_container_width=True
+        "📥 Télécharger les résultats (CSV)", data=csv,
+        file_name="simulation_resultats.csv", mime="text/csv", use_container_width=True
     )
 
     # -- Actions de contrôle --
