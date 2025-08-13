@@ -12,6 +12,7 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
         client = gspread.authorize(creds)
+
         sh = client.open("TIPS_Simulateur")
         sheet = sh.sheet1
         sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc])
@@ -88,47 +89,15 @@ else:
         df = pd.DataFrame({
             "Années": annees,
             "Compte Titres": valeurs_ct,
-            "Plus-value CT (€)": [v - capital_initial for v in valeurs_ct],
-            "Plus-value CT (%)": [(v / capital_initial - 1) * 100 for v in valeurs_ct],
-            "Contrat Capitalisation": valeurs_cc,
-            "Plus-value CC (€)": [v - capital_initial for v in valeurs_cc],
-            "Plus-value CC (%)": [(v / capital_initial - 1) * 100 for v in valeurs_cc]
+            "Contrat Capitalisation": valeurs_cc
         })
 
-        # Stylisation
-        styled_df = df.copy()
-        styled_df["Compte Titres"] = styled_df["Compte Titres"].map("{:,.0f} €".format)
-        styled_df["Plus-value CT (€)"] = df["Plus-value CT (€)"].map("{:,.0f} €".format)
-        styled_df["Plus-value CT (%)"] = df["Plus-value CT (%)"].map("{:,.1f} %".format)
-        styled_df["Contrat Capitalisation"] = styled_df["Contrat Capitalisation"].map("{:,.0f} €".format)
-        styled_df["Plus-value CC (€)"] = df["Plus-value CC (€)"].map("{:,.0f} €".format)
-        styled_df["Plus-value CC (%)"] = df["Plus-value CC (%)"].map("{:,.1f} %".format)
-
-        def color_rows(row_idx):
-            return ['background-color: #eef3fb'] * len(df.columns) if row_idx % 2 == 0 else ['background-color: #ffffff'] * len(df.columns)
-
         st.markdown("### 🔹 Résultats chiffrés")
-        st.dataframe(
-            styled_df.style
-            .set_properties(**{"text-align": "center"})
-            .set_table_styles([{
-                'selector': 'th',
-                'props': [('background-color', '#00274D'), ('color', 'white'), ('font-weight', 'bold')]
-            }])
-            .apply(lambda _: color_rows(_.name), axis=1)
-        )
+        styled_df = df.copy()
+        styled_df["Compte Titres"] = df["Compte Titres"].map("{:,.0f} €".format)
+        styled_df["Contrat Capitalisation"] = df["Contrat Capitalisation"].map("{:,.0f} €".format)
 
-        # Résumé visuel des plus-values
-        st.markdown("### 🔹 Résumé des plus-values")
-        st.markdown(
-            f"""
-            <div style="background-color:#f0f2f6; padding:20px; border-radius:10px; border-left:6px solid #005bbb;">
-                <p style="font-size:16px; margin-bottom:10px;"><strong>Compte Titres</strong> : {df['Plus-value CT (€)'].iloc[-1]:,.0f} € soit {df['Plus-value CT (%)'].iloc[-1]:.1f} %</p>
-                <p style="font-size:16px; margin-bottom:0;"><strong>Contrat de Capitalisation</strong> : {df['Plus-value CC (€)'].iloc[-1]:,.0f} € soit {df['Plus-value CC (%)'].iloc[-1]:.1f} %</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.dataframe(styled_df)
 
         st.markdown("### 🔹 Évolution des placements")
         fig = go.Figure()
@@ -137,34 +106,25 @@ else:
         fig.update_layout(xaxis_title='Années', yaxis_title='Valeur (€)', height=400)
         st.plotly_chart(fig, use_container_width=True)
 
-        # Explication fiscalité
-        with st.container():
-            st.markdown("### 📘 Comprendre la fiscalité appliquée dans la simulation")
-            st.markdown("""
-            #### 🔷 Contrat de Capitalisation  
-            Une **avance fiscale annuelle** est appliquée selon la formule suivante :  
-            **105 % × TME × Rendement annuel brut**
+        valeur_finale_ct = valeurs_ct[-1]
+        valeur_finale_cc = valeurs_cc[-1]
+        gain_absolu = valeur_finale_cc - valeur_finale_ct
+        gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
 
-            > Hypothèse utilisée dans cette simulation :  
-            TME (Juillet 2025) = **3,41 %**  
-            [Source : Banque de France – TME](https://webstat.banque-france.fr/fr/catalogue/fm/FM.M.FR.EUR.FR2.MM.TME.HSTA)
-
-            Cette avance est ajoutée chaque année au résultat imposable de l’entreprise.
-
-            #### 🔷 Compte Titres  
-            La **plus-value annuelle** est directement intégrée au résultat imposable de l’entreprise et **soumise à l’Impôt sur les Sociétés (IS) au taux de 25 %**.
-
-            ---  
-            Le traitement fiscal plus avantageux du contrat de capitalisation permet une économie d’impôt annuelle.  
-            Cette économie est **réinvestie**, générant des gains supplémentaires grâce à **l’effet des intérêts composés**.
-            """)
-
-        if st.button("⬅ Refaire une simulation"):
-            st.session_state.started = False
-            st.rerun()
+        st.markdown("### 🔹 Comparatif final")
+        st.markdown(
+            f"""
+            <div style="background-color:#f0f4f8; padding:20px; border-radius:10px; border-left:6px solid #005bbb;">
+                <p style="font-size:16px;">Contrat de Capitalisation après {duree} ans : <strong>{valeur_finale_cc:,.0f} €</strong></p>
+                <p style="font-size:16px;">Compte Titres après {duree} ans : <strong>{valeur_finale_ct:,.0f} €</strong></p>
+                <p style="font-size:16px;">💡 <strong>Écart de performance :</strong> {gain_absolu:,.0f} € (+{gain_relatif:.1f} %)</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
         st.markdown("---")
         st.markdown("### 📅 Prochaine étape : réservez directement un rendez-vous")
         st.components.v1.iframe("https://calendly.com/vincent-sanctot-tips-placements", width=700, height=700, scrolling=True)
 
-        envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeurs_ct[-1], valeurs_cc[-1])
+        envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeur_finale_ct, valeur_finale_cc)
