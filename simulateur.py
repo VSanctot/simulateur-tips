@@ -29,15 +29,15 @@ if not st.session_state.started:
     with col1:
         st.image("logo_tips.png", width=150)
     with col2:
-        st.markdown("## le simulateur qui transforme vos décisions en valeur")
-        st.markdown("### *Un levier d’aide à la décision pour optimiser les choix d’investissement*")
+        st.markdown("## Le simulateur qui transforme vos décisions en valeur")
+        st.markdown("### *Un levier d’aide à la décision pour optimiser vos choix d’investissement*")
 
     st.markdown("---")
     st.markdown("""
         ### Pourquoi utiliser ce simulateur ?  
-        🔹 Comprendre l'impact de la fiscalité sur la performance financière d'un **Compte Titres** et d'un **Contrat de Capitalisation**  
-        🔹 Évaluez vos gains nets après fiscalité, en fonction de votre **capital, rendement et durée**  
-        🔹 Obtenez un **résumé clair** de vos résultats  
+        🔹 Comprendre l'impact de la fiscalité sur la performance d'un **Compte Titres** et d'un **Contrat de Capitalisation**, indépendamment de l'allocation choisie
+        🔹 Évaluez vos gains nets, en fonction de vos objectifs
+        🔹 Renforcer votre compréhension de chaque dispositif 
     """)
 
     if st.button("🚀 Démarrer la simulation"):
@@ -49,7 +49,7 @@ else:
     with col1:
         st.image("logo_tips.png", width=120)
     with col2:
-        st.markdown("## TIPS : le simulateur qui valorise votre patrimoine")
+        st.markdown("## Le simulateur qui transforme vos décisions en valeur")
         st.markdown("*Un outil clair et factuel pour comparer vos solutions d’investissement*")
 
     if st.button("⬅ Retour à l’accueil"):
