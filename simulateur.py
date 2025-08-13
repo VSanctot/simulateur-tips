@@ -1,195 +1,153 @@
-# streamlit_app.py
 import streamlit as st
-import numpy as np
 import pandas as pd
-
-# ----------------- Réglages généraux -----------------
-st.set_page_config(page_title="Simulateur Placements", page_icon="📊", layout="wide")
-
-# CSS minimal pour lisibilité (fond clair, texte foncé, tableau contrasté)
-st.markdown("""
-<style>
-/* Conserve un fond clair même si le thème sombre est choisi côté utilisateur */
-html, body, [data-testid="stAppViewContainer"] {
-  background: #ffffff !important; color: #111 !important;
-}
-h1, h2, h3, h4, h5 { color:#1f2937 !important; }
-[data-testid="stMetricDelta"], .st-emotion-cache-1q6af9w { color:#111 !important; }
-
-/* Tableau : lignes zebra + texte foncé */
-[data-testid="stTable"], [data-testid="stDataFrame"] table {
-  color: #111 !important;
-}
-[data-testid="stDataFrame"] tbody tr:nth-child(odd) td {
-  background: #fafafa !important;
-}
-[data-testid="stDataFrame"] tbody tr:nth-child(even) td {
-  background: #f3f4f6 !important;
-}
-
-/* Boutons pleins largeur sur mobile */
-@media (max-width: 640px) {
-  .block-container { padding-top: 0.5rem; }
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ----------------- Etat de l'app -----------------
-if "locked" not in st.session_state:
-    st.session_state.locked = False
-if "result" not in st.session_state:
-    st.session_state.result = None
-if "table" not in st.session_state:
-    st.session_state.table = None
-
-# ----------------- Modèle de calcul -----------------
-def simulate(capital_initial: float, n_years: int, r_ct: float, r_cc: float):
-    """
-    Calcule les trajectoires de valeur pour :
-    - Compte Titres (CT)
-    - Contrat de Capitalisation (CC)
-
-    r_ct et r_cc doivent être fournis en taux décimal (ex: 0.0375 pour 3,75%).
-    """
-    years = np.arange(0, n_years + 1)
-    ct = capital_initial * (1 + r_ct) ** years
-    cc = capital_initial * (1 + r_cc) ** years
-    return {"years": years, "ct": ct, "cc": cc}
-
-def build_table(data: dict) -> pd.DataFrame:
-    """Construit le tableau récapitulatif avec écart € et %."""
-    years = data["years"]
-    ct = data["ct"]
-    cc = data["cc"]
-    diff = cc - ct
-    pct = np.where(ct != 0, diff / ct, 0.0)
-
-    df = pd.DataFrame({
-        "Années": years.astype(int),
-        "Compte Titres (€)": ct,
-        "Contrat Capitalisation (€)": cc,
-        "Écart (€)": diff,
-        "Écart (%)": pct
-    })
-
-    # Version affichage (strings formatées pour lisibilité)
-    df_display = pd.DataFrame({
-        "Années": df["Années"],
-        "Compte Titres (€)": df["Compte Titres (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
-        "Contrat Capitalisation (€)": df["Contrat Capitalisation (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
-        "Écart (€)": df["Écart (€)"].map(lambda x: f"{x:,.0f}".replace(",", " ").replace(".", ",")),
-        "Écart (%)": df["Écart (%)"].map(lambda x: f"{x*100:,.2f} %".replace(",", " ").replace(".", ","))
-    })
-    return df, df_display
-
-# ----------------- Graphique Plotly -----------------
 import plotly.graph_objects as go
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
-def build_figure(data: dict) -> go.Figure:
-    fig = go.Figure()
+# ======================
+# CONFIGURATION GOOGLE SHEETS
+# ======================
+def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc):
+    try:
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
+        client = gspread.authorize(creds)
+        sh = client.open("TIPS_Simulateur")
+        sheet = sh.sheet1
+        sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc])
+    except Exception as e:
+        print(f"[DEBUG] Erreur Google Sheets : {e}")  # log invisible côté client
 
-    fig.add_trace(go.Scatter(
-        x=data["years"], y=data["ct"], mode="lines+markers",
-        name="Compte Titres"
-    ))
-    fig.add_trace(go.Scatter(
-        x=data["years"], y=data["cc"], mode="lines+markers",
-        name="Contrat Capitalisation"
-    ))
+# ======================
+# PAGE D’ACCUEIL
+# ======================
+if "started" not in st.session_state:
+    st.session_state.started = False
 
-    # Légende horizontale, au-dessus, ancrée à droite -> meilleure lisibilité mobile
-    fig.update_layout(
-        title="Évolution comparée des placements",
-        xaxis_title="Années",
-        yaxis_title="Montant (€)",
-        legend=dict(
-            orientation="h",
-            yanchor="bottom", y=1.02,
-            xanchor="right",  x=1
-        ),
-        margin=dict(l=10, r=10, t=60, b=10),
-        hovermode="x unified"
-    )
-    # Séparateurs de milliers
-    fig.update_yaxes(separatethousands=True)
-    return fig
+if not st.session_state.started:
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        st.image("logo_tips.png", width=150)
+    with col2:
+        st.markdown("## Le simulateur qui transforme vos décisions en valeur")
+        st.markdown("### *Un levier d’aide à la décision pour optimiser les choix d’investissement*")
 
-# ----------------- UI -----------------
-st.title("Simulateur Placements")
+    st.markdown("---")
+    st.markdown("""
+        ### Pourquoi utiliser ce simulateur ?  
+        🔹 Comprendre l’impact de la fiscalité sur la performance d’un **Compte Titres** et d’un **Contrat de Capitalisation**  
+        🔹 Visualiser vos gains nets en fonction de votre **capital, rendement et durée**  
+        🔹 Obtenir un **résumé clair** des résultats  
+    """)
 
-with st.form("params"):
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        capital_initial = st.number_input(
-            "Capital initial (€)", min_value=10_000, max_value=10_000_000,
-            value=100_000, step=1_000, disabled=st.session_state.locked
-        )
-    with c2:
-        r_ct = st.number_input(
-            "Rendement CT (%)", min_value=0.0, max_value=50.0,
-            value=3.75, step=0.10, disabled=st.session_state.locked
-        ) / 100.0
-    with c3:
-        r_cc = st.number_input(
-            "Rendement CC (%)", min_value=0.0, max_value=50.0,
-            value=4.95, step=0.10, disabled=st.session_state.locked
-        ) / 100.0
+    if st.button("🚀 Démarrer la simulation"):
+        st.session_state.started = True
+        st.rerun()
 
-    n_years = st.slider(
-        "Durée (années)", min_value=1, max_value=40, value=10,
-        disabled=st.session_state.locked
-    )
-
-    submitted = st.form_submit_button(
-        "Lancer la simulation", disabled=st.session_state.locked, use_container_width=True
-    )
-
-# Calcul uniquement au clic (évite les reruns à chaque frappe)
-if submitted and not st.session_state.locked:
-    st.session_state.result = simulate(capital_initial, n_years, r_ct, r_cc)
-    raw_df, disp_df = build_table(st.session_state.result)
-    st.session_state.table = (raw_df, disp_df)
-
-# ----------------- Résultats -----------------
-if st.session_state.result is not None:
-    fig = build_figure(st.session_state.result)
-
-    # Graphique figé si locked=True (plus de pan/zoom, barre d'outils masquée)
-    st.plotly_chart(
-        fig, use_container_width=True,
-        config={"displayModeBar": False, "staticPlot": st.session_state.locked}
-    )
-
-    # -- Tableau chiffré + Download --
-    st.subheader("Résultats chiffrés")
-    raw_df, disp_df = st.session_state.table
-
-    st.dataframe(
-        disp_df, use_container_width=True, hide_index=True
-    )
-
-    # Export CSV (données brutes, pas les strings formatées)
-    csv = raw_df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "📥 Télécharger les résultats (CSV)", data=csv,
-        file_name="simulation_resultats.csv", mime="text/csv", use_container_width=True
-    )
-
-    # -- Actions de contrôle --
-    colL, colR = st.columns(2)
-    with colL:
-        if not st.session_state.locked:
-            if st.button("✅ Figer ce résultat", use_container_width=True):
-                st.session_state.locked = True
-                st.rerun()
-        else:
-            st.info("Résultat figé : les entrées sont verrouillées et le graphe est statique.")
-
-    with colR:
-        if st.button("🔄 Réinitialiser / Nouvelle simulation", use_container_width=True):
-            st.session_state.locked = False
-            st.session_state.result = None
-            st.session_state.table = None
-            st.rerun()
 else:
-    st.caption("Réglez vos paramètres puis cliquez sur **Lancer la simulation**.")
+    # ======================
+    # INTERFACE SIMULATEUR
+    # ======================
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        st.image("logo_tips.png", width=120)
+    with col2:
+        st.markdown("## TIPS : le simulateur qui valorise votre patrimoine")
+        st.markdown("*Un outil clair et factuel pour comparer vos solutions d’investissement*")
+
+    if st.button("⬅ Retour à l’accueil"):
+        st.session_state.started = False
+        st.rerun()
+
+    st.markdown("---")
+    st.markdown("### 🔹 Étape 1 : Paramètres de simulation")
+
+    prenom_nom = st.text_input("👤 Prénom / Nom")
+    societe = st.text_input("🏢 Société")
+    email_pro = st.text_input("📧 Email professionnel")
+    capital_initial = st.number_input("💰 Capital investi (€)", min_value=1000, step=1000, value=1000000)
+    taux_rendement = st.number_input("📈 Rendement brut attendu (%)", min_value=1.0, step=0.1, value=5.0)
+    duree = st.slider("⏳ Durée de placement (années)", 1, 30, 10)
+
+    lancer = st.button("🚀 Lancer la simulation")
+
+    if lancer:
+        annees = list(range(1, duree + 1))
+
+        # Hypothèses fiscales
+        taux_fiscal_ct = 0.25
+        taux_fiscal_cc = 1.05 * 0.0341 * 0.25  # 105% x 3.41% x 25%
+
+        rendement_ct = taux_rendement * (1 - taux_fiscal_ct)
+        rendement_cc = taux_rendement * (1 - taux_fiscal_cc)
+
+        valeurs_ct = [capital_initial * ((1 + rendement_ct / 100) ** annee) for annee in annees]
+        valeurs_cc = [capital_initial * ((1 + rendement_cc / 100) ** annee) for annee in annees]
+
+        valeurs_ct.insert(0, capital_initial)
+        valeurs_cc.insert(0, capital_initial)
+        annees = [0] + annees
+
+        df = pd.DataFrame({
+            "Années": annees,
+            "Compte Titres": valeurs_ct,
+            "Contrat Capitalisation": valeurs_cc
+        })
+
+        # Étape 2 : Résultats
+        st.markdown("### 🔹 Résultats chiffrés (comparatif amélioré)")
+        styled_df = df.copy()
+        styled_df["Compte Titres"] = styled_df["Compte Titres"].map("{:,.0f} €".format)
+        styled_df["Contrat Capitalisation"] = styled_df["Contrat Capitalisation"].map("{:,.0f} €".format)
+        st.dataframe(styled_df.style
+                     .set_properties(**{"text-align": "center"})
+                     .set_table_styles([{
+                         'selector': 'th',
+                         'props': [('background-color', '#00274D'), ('color', 'white'), ('font-weight', 'bold')]
+                     }])
+                     .apply(lambda _: ['background-color: #eef3fb']*len(df) if _ % 2 == 0 else ['background-color: #ffffff']*len(df), axis=1)
+                     )
+
+        # Graphique interactif
+        st.markdown("### 🔹 Évolution des placements")
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=df["Années"], y=df["Compte Titres"],
+                                 mode="lines", name="Compte Titres", line=dict(width=3)))
+        fig.add_trace(go.Scatter(x=df["Années"], y=df["Contrat Capitalisation"],
+                                 mode="lines", name="Contrat Capitalisation", line=dict(width=3)))
+        fig.update_layout(xaxis_title="Années", yaxis_title="Valeur (€)")
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Résumé stylisé
+        st.markdown("### 🔹 Conclusion comparative")
+        valeur_finale_ct = valeurs_ct[-1]
+        valeur_finale_cc = valeurs_cc[-1]
+        gain_absolu = valeur_finale_cc - valeur_finale_ct
+        gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100
+
+        st.markdown(f"""
+            <div style="background-color:#e6f4ea; padding:20px; border-radius:10px; border-left:8px solid #34a853;">
+                <h4 style="margin-top:0;">📌 Résumé de la simulation</h4>
+                <p style="font-size:16px;">
+                    Après <strong>{duree} ans</strong>, le <strong>Contrat de Capitalisation</strong> atteint 
+                    <strong>{valeur_finale_cc:,.0f} €</strong>, contre <strong>{valeur_finale_ct:,.0f} €</strong> pour le 
+                    <strong>Compte Titres</strong>.
+                </p>
+                <p style="font-size:16px;">
+                    ✅ <strong>Gain net constaté :</strong> {gain_absolu:,.0f} €  
+                    <br>📈 <strong>Écart de performance :</strong> {gain_relatif:.1f}% en faveur du Contrat de Capitalisation.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("⬅ Refaire une simulation"):
+            st.session_state.started = False
+            st.rerun()
+
+        # Calendly
+        st.markdown("---")
+        st.markdown("### 📅 Prochaine étape : réservez directement un rendez-vous")
+        st.components.v1.iframe("https://calendly.com/vincent-sanctot-tips-placements", width=700, height=700)
+
+        # Enregistrement
+        envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeur_finale_ct, valeur_finale_cc)
