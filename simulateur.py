@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -12,6 +13,7 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
         client = gspread.authorize(creds)
+
         sh = client.open("TIPS_Simulateur")
         sheet = sh.sheet1
         sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc])
@@ -19,25 +21,27 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         print(f"[DEBUG] Erreur Google Sheets : {e}")
 
 # ======================
-# INTERFACE
+# PAGE D’ACCUEIL
 # ======================
 if "started" not in st.session_state:
     st.session_state.started = False
 
 if not st.session_state.started:
-    col1, col2 = st.columns([1,4])
+    col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logo_tips.png", width=150)
     with col2:
         st.markdown("## Le simulateur qui transforme vos décisions en valeur")
-        st.markdown("### *Un levier d’aide à la décision pour optimiser vos choix d’investissement*")
+        st.markdown("### *Un levier d’aide à la décision pour optimiser les choix d’investissement*")
 
     st.markdown("---")
+
     st.markdown("""
-        ### Pourquoi utiliser ce simulateur ?  
-        🔹 Comprendre l'impact de la fiscalité sur la performance d'un **Compte Titres** et d'un **Contrat de Capitalisation**, indépendamment de l'allocation choisie
-        🔹 Évaluez vos gains nets, en fonction de vos objectifs
-        🔹 Renforcer votre compréhension de chaque dispositif 
+    ### Pourquoi utiliser ce simulateur ?  
+
+    🔹 Comprendre l'impact de la fiscalité sur la performance d'un **Compte Titres** et d'un **Contrat de Capitalisation**, indépendamment de l'allocation choisie  
+    🔹 Évaluer vos gains nets, en fonction de vos objectifs  
+    🔹 Renforcer votre compréhension de chaque dispositif
     """)
 
     if st.button("🚀 Démarrer la simulation"):
@@ -45,7 +49,7 @@ if not st.session_state.started:
         st.rerun()
 
 else:
-    col1, col2 = st.columns([1,4])
+    col1, col2 = st.columns([1, 4])
     with col1:
         st.image("logo_tips.png", width=120)
     with col2:
