@@ -12,7 +12,6 @@ def envoi_google_sheets(prenom_nom, societe, email_pro, capital, rendement, dure
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["GOOGLE_SHEETS_CREDS"], scope)
         client = gspread.authorize(creds)
-
         sh = client.open("TIPS_Simulateur")
         sheet = sh.sheet1
         sheet.append_row([prenom_nom, societe, email_pro, capital, rendement, duree, valeur_ct, valeur_cc])
@@ -31,7 +30,7 @@ if not st.session_state.started:
         st.image("logo_tips.png", width=150)
     with col2:
         st.markdown("## Le simulateur qui transforme vos décisions en valeur")
-        st.markdown("### *Un levier d’aide à la décision pour optimiser les choix d’investissement*")
+        st.markdown("### *Un outil d’aide à la décision pour optimiser les choix d’investissement*")
 
     st.markdown("---")
 
@@ -89,18 +88,26 @@ else:
         df = pd.DataFrame({
             "Années": annees,
             "Compte Titres": valeurs_ct,
-            "Contrat Capitalisation": valeurs_cc
+            "Plus-value CT (€)": [v - capital_initial for v in valeurs_ct],
+            "Plus-value CT (%)": [(v / capital_initial - 1) * 100 for v in valeurs_ct],
+            "Contrat Capitalisation": valeurs_cc,
+            "Plus-value CC (€)": [v - capital_initial for v in valeurs_cc],
+            "Plus-value CC (%)": [(v / capital_initial - 1) * 100 for v in valeurs_cc]
         })
 
-        st.markdown("### 🔹 Résultats chiffrés (comparatif amélioré)")
-
+        # Stylisation
         styled_df = df.copy()
         styled_df["Compte Titres"] = styled_df["Compte Titres"].map("{:,.0f} €".format)
+        styled_df["Plus-value CT (€)"] = df["Plus-value CT (€)"].map("{:,.0f} €".format)
+        styled_df["Plus-value CT (%)"] = df["Plus-value CT (%)"].map("{:,.1f} %".format)
         styled_df["Contrat Capitalisation"] = styled_df["Contrat Capitalisation"].map("{:,.0f} €".format)
+        styled_df["Plus-value CC (€)"] = df["Plus-value CC (€)"].map("{:,.0f} €".format)
+        styled_df["Plus-value CC (%)"] = df["Plus-value CC (%)"].map("{:,.1f} %".format)
 
         def color_rows(row_idx):
             return ['background-color: #eef3fb'] * len(df.columns) if row_idx % 2 == 0 else ['background-color: #ffffff'] * len(df.columns)
 
+        st.markdown("### 🔹 Résultats chiffrés")
         st.dataframe(
             styled_df.style
             .set_properties(**{"text-align": "center"})
@@ -111,6 +118,18 @@ else:
             .apply(lambda _: color_rows(_.name), axis=1)
         )
 
+        # Résumé visuel des plus-values
+        st.markdown("### 🔹 Résumé des plus-values")
+        st.markdown(
+            f"""
+            <div style="background-color:#f0f2f6; padding:20px; border-radius:10px; border-left:6px solid #005bbb;">
+                <p style="font-size:16px; margin-bottom:10px;"><strong>Compte Titres</strong> : {df['Plus-value CT (€)'].iloc[-1]:,.0f} € soit {df['Plus-value CT (%)'].iloc[-1]:.1f} %</p>
+                <p style="font-size:16px; margin-bottom:0;"><strong>Contrat de Capitalisation</strong> : {df['Plus-value CC (€)'].iloc[-1]:,.0f} € soit {df['Plus-value CC (%)'].iloc[-1]:.1f} %</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         st.markdown("### 🔹 Évolution des placements")
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=annees, y=valeurs_ct, mode='lines', name="Compte Titres"))
@@ -118,7 +137,7 @@ else:
         fig.update_layout(xaxis_title='Années', yaxis_title='Valeur (€)', height=400)
         st.plotly_chart(fig, use_container_width=True)
 
-        # 📘 Encadré explicatif fiscalité
+        # Explication fiscalité
         with st.container():
             st.markdown("### 📘 Comprendre la fiscalité appliquée dans la simulation")
             st.markdown("""
@@ -126,7 +145,7 @@ else:
             Une **avance fiscale annuelle** est appliquée selon la formule suivante :  
             **105 % × TME × Rendement annuel brut**
 
-            > 🔎 **Hypothèse utilisée dans cette simulation :**  
+            > Hypothèse utilisée dans cette simulation :  
             TME (Juillet 2025) = **3,41 %**  
             [Source : Banque de France – TME](https://webstat.banque-france.fr/fr/catalogue/fm/FM.M.FR.EUR.FR2.MM.TME.HSTA)
 
@@ -135,37 +154,10 @@ else:
             #### 🔷 Compte Titres  
             La **plus-value annuelle** est directement intégrée au résultat imposable de l’entreprise et **soumise à l’Impôt sur les Sociétés (IS) au taux de 25 %**.
 
-            ---
-
-            ### 📈 Pourquoi cette différence est importante ?
-            Le **traitement fiscal plus avantageux du contrat de capitalisation** permet une économie d’impôt annuelle.  
-            Cette économie est **réinvestie**, générant ainsi des gains supplémentaires grâce à **l’effet des intérêts composés**.
+            ---  
+            Le traitement fiscal plus avantageux du contrat de capitalisation permet une économie d’impôt annuelle.  
+            Cette économie est **réinvestie**, générant des gains supplémentaires grâce à **l’effet des intérêts composés**.
             """)
-
-        valeur_finale_ct = valeurs_ct[-1]
-        valeur_finale_cc = valeurs_cc[-1]
-        gain_absolu = valeur_finale_cc - valeur_finale_ct
-        gain_relatif = (valeur_finale_cc / valeur_finale_ct - 1) * 100 if valeur_finale_ct > 0 else float("inf")
-
-        st.markdown("### 🔹 Conclusion comparative")
-        with st.container():
-            st.markdown(
-                f"""
-                <div style="background-color:#e6f4ea; padding:20px; border-radius:10px; border-left:8px solid #34a853;">
-                    <h4 style="margin-top:0;">📌 Résumé de la simulation</h4>
-                    <p style="font-size:16px;">
-                        Après <strong>{duree} ans</strong>, le <strong>Contrat de Capitalisation</strong> atteint 
-                        <strong>{valeur_finale_cc:,.0f} €</strong>, contre <strong>{valeur_finale_ct:,.0f} €</strong> pour le 
-                        <strong>Compte Titres</strong>.
-                    </p>
-                    <p style="font-size:16px;">
-                        ✅ <strong>Gain net constaté :</strong> {gain_absolu:,.0f} €  
-                        <br>📈 <strong>Écart de performance :</strong> {gain_relatif:.0f}% en faveur du Contrat de Capitalisation.
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
 
         if st.button("⬅ Refaire une simulation"):
             st.session_state.started = False
@@ -175,4 +167,4 @@ else:
         st.markdown("### 📅 Prochaine étape : réservez directement un rendez-vous")
         st.components.v1.iframe("https://calendly.com/vincent-sanctot-tips-placements", width=700, height=700, scrolling=True)
 
-        envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeur_finale_ct, valeur_finale_cc)
+        envoi_google_sheets(prenom_nom, societe, email_pro, capital_initial, taux_rendement, duree, valeurs_ct[-1], valeurs_cc[-1])
